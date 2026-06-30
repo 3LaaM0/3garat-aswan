@@ -940,7 +940,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getDatabase, ref, push, onValue, off, serverTimestamp
+  getDatabase, ref, push, set, onValue, off, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
@@ -963,7 +963,7 @@ const googleProvider = new GoogleAuthProvider();
 
 // expose what global (non-module) script code needs
 window.__fb = {
-  ref, push, onValue, off, serverTimestamp, db,
+  ref, push, set, onValue, off, serverTimestamp, db,
   auth, googleProvider, signInWithPopup, signOut
 };
 
@@ -1000,7 +1000,8 @@ function getMyChatId(){
 const myChatId = getMyChatId();
 let chatListenerRef = null;
 
-let properties = [
+/* العقارات الافتراضية — تظهر دائماً كأمثلة، مش متخزنة في Firebase */
+const defaultProperties = [
   { id:1, title:'شقة 3 غرف بحي الشلال', type:'شقة', purpose:'sale', loc:'أسوان — حي الشلال', price:850000, area:160, beds:3, baths:2, desc:'شقة بحالة ممتازة في حي الشلال الراقي، قريبة من كورنيش النيل وجميع الخدمات، تشطيب جيد.', phone:'01012345678' },
   { id:2, title:'فيلا على النيل بالمنشية', type:'فيلا', purpose:'sale', loc:'أسوان — المنشية', price:4500000, area:400, beds:5, baths:3, desc:'فيلا فاخرة بإطلالة مباشرة على نهر النيل في المنشية، حديقة واسعة وتشطيب سوبر لوكس.', phone:'01098765432' },
   { id:3, title:'شقة مفروشة للإيجار بالكورنيش', type:'شقة', purpose:'rent', loc:'أسوان — كورنيش النيل', price:4000, area:110, beds:2, baths:1, desc:'شقة مفروشة بالكامل مع إطلالة على النيل، مناسبة للعائلات والأفراد، موقع مميز.', phone:'01123456789' },
@@ -1010,6 +1011,25 @@ let properties = [
   { id:7, title:'شقة للبيع بالصواليح', type:'شقة', purpose:'sale', loc:'أسوان — الصواليح', price:450000, area:120, beds:2, baths:1, desc:'شقة بسعر مناسب في منطقة الصواليح، مناسبة للشباب والعائلات الصغيرة.', phone:'01012309876' },
   { id:8, title:'أرض زراعية بإدفو', type:'أرض', purpose:'sale', loc:'أسوان — إدفو', price:320000, area:2000, beds:0, baths:0, desc:'أرض زراعية خصبة بمحافظة أسوان في منطقة إدفو، مياه وفيرة ومناسبة للزراعة.', phone:'01098001234' },
 ];
+
+/* العقارات اللي بيضيفها المستخدمون — متخزنة في Firebase وتتحدث لحظياً */
+let userProperties = [];
+
+/* القائمة المعروضة فعلياً = الافتراضية + المضافة من المستخدمين */
+let properties = [...defaultProperties];
+
+function listenToProperties(){
+  const { ref, onValue, db } = window.__fb;
+  const propsRef = ref(db, 'properties');
+  onValue(propsRef, (snapshot) => {
+    const data = snapshot.val();
+    userProperties = data ? Object.values(data) : [];
+    // الأحدث يظهر أولاً
+    userProperties.sort((a, b) => (b.id||0) - (a.id||0));
+    properties = [...userProperties, ...defaultProperties];
+    renderCards();
+  });
+}
 
 function fmt(n){ return Number(n).toLocaleString('ar-EG'); }
 
@@ -1082,7 +1102,7 @@ function closeModal(id){
   document.getElementById(id).classList.remove('open');
 }
 
-function addProperty(){
+async function addProperty(){
   const title = document.getElementById('f-title').value.trim();
   const price = document.getElementById('f-price').value;
   if(!title || !price){ showToast('يرجى ملء الحقول الأساسية'); return; }
@@ -1101,11 +1121,25 @@ function addProperty(){
     phone:   document.getElementById('f-phone').value  || '',
     img:     (imgEl.style.display !== 'none' && imgEl.src) ? imgEl.src : null,
   };
-  properties.unshift(p);
-  closeModal('addOverlay');
-  clearForm();
-  renderCards();
-  showToast('✅ تم نشر عقارك بنجاح!');
+
+  const submitBtn = document.querySelector('#addOverlay .submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'جاري النشر…';
+
+  try{
+    const { ref, set, db } = window.__fb;
+    await set(ref(db, 'properties/' + p.id), p);
+    closeModal('addOverlay');
+    clearForm();
+    showToast('✅ تم نشر عقارك بنجاح!');
+    // renderCards() هتتنفذ تلقائياً عن طريق listener الـ Firebase
+  } catch(err){
+    console.error('Add property error:', err);
+    showToast('⚠️ حدث خطأ أثناء النشر، حاول تاني');
+  } finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'نشر العقار';
+  }
 }
 
 function clearForm(){
@@ -1361,7 +1395,8 @@ document.querySelectorAll('.overlay').forEach(o => {
   });
 });
 
-renderCards();
+renderCards();        // اعرضي العقارات الافتراضية فوراً
+listenToProperties(); // ثم ابدئي الاستماع لعقارات Firebase وادمجيها
 </script>
 </body>
 </html>
