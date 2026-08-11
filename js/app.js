@@ -34,31 +34,22 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
-// دالة العرض مع أنيميشن الموشن جرافيك السلس
+// دالة العرض مع أنيميشن الموشن السلس للمحتوى
 function renderView(view, params) {
   document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active");
-    v.style.opacity = 0;
-    v.style.transform = "translateY(15px)";
+    v.classList.remove("active", "page-motion-enter");
   });
 
-  const target = document.getElementById(`view-${view}`);
+  // الربط الذكي للرئيسية والمنتجات
+  let targetId = `view-${view}`;
+  if (view === "products") targetId = "view-home";
+
+  const target = document.getElementById(targetId) || document.getElementById("view-home");
   if (target) {
     target.classList.add("active");
-    // تطبيق موشن أنيميشن احترافي عند الدخول لأي صفحة
-    setTimeout(() => {
-      target.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
-      target.style.opacity = 1;
-      target.style.transform = "translateY(0)";
-    }, 20);
-  } else {
-    const homeTarget = document.getElementById("view-home");
-    if(homeTarget) {
-      homeTarget.classList.add("active");
-      homeTarget.style.opacity = 1;
-      homeTarget.style.transform = "translateY(0)";
-    }
-    view = "home";
+    // إعادة تشغيل أنيميشن الموشن عند كل تنقل
+    void target.offsetWidth; 
+    target.classList.add("page-motion-enter");
   }
 
   if (view === "product") renderProductDetails(params.id);
@@ -72,12 +63,12 @@ window.addEventListener("hashchange", () => {
   renderView(view, params);
 });
 
-// ---------- عرض المنتجات بالرئيسية ----------
+// ---------- عرض المنتجات بالرئيسية متسنترة ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
-  if (!grid) return;
+  if (!grid || typeof PRODUCTS === "undefined") return;
   grid.innerHTML = PRODUCTS.map(p => `
-    <div class="product-card fade-in-up" style="transition: transform 0.3s ease;">
+    <div class="product-card fade-in-up">
       <div class="product-image" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">
         <img src="${p.image}" alt="${p.name}" loading="lazy">
       </div>
@@ -141,11 +132,6 @@ function renderProductDetails(id) {
           <ul class="specs-list">
             ${product.specs.map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
-
-          <div class="customer-reviews-box" style="background: #151515; border: 1px solid #222; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <h4 style="color: #fff; margin-bottom: 8px; font-size: 15px;">💬 آراء بعض العملاء:</h4>
-            <p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">"المنتج وصلني أصلي وبنفس المواصفات، خامة ممتازة جداً." - <b>محمد أ.</b></p>
-          </div>
 
           <div class="qty-selector">
             <span>الكمية:</span>
@@ -502,7 +488,7 @@ function renderMyOrdersView() {
 
     return `
       <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid #222;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align- items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 10px;">
           <h3 style="margin: 0; color: #fff;">رقم الطلب: ${order.orderNumber}</h3>
           <span style="background: rgba(0,255,102,0.1); color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">${status}</span>
         </div>
