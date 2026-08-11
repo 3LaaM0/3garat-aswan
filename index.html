@@ -22,12 +22,10 @@
     </div>
 
     <ul class="nav-links">
-   <a href="#home" onclick="navigate('home')">الرئيسية</a>
+  <a href="#home" onclick="navigate('home')">الرئيسية</a>
 <a href="#products" onclick="navigate('products')">المنتجات</a>
 <a href="#about" onclick="navigate('about')">من نحن</a>
 <a href="#myorders" onclick="navigate('myorders')">طلباتي</a>
-<button onclick="toggleStoreTheme()" id="storeThemeBtn" style="background: none; border: 1px solid #333; color: #fff; padding: 5px 10px; border-radius: 15px; cursor: pointer; font-size: 13px;">🌙</button>
-
     <div class="header-actions">
       <a class="cart-btn" onclick="navigate('cart')">
         🛒<span class="cart-count" id="cartCount">0</span>
@@ -45,7 +43,7 @@
   <a onclick="navigate('home')">الرئيسية</a>
   <a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">المنتجات</a>
   <a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'}),80)">من نحن</a>
-  <a onclick="navigate('tracking')">تتبع الطلب</a>
+  <a onclick="navigate('tracking')">طلباتي</a>
   <a onclick="navigate('cart')">سلة التسوق 🛒</a>
 </div>
 
