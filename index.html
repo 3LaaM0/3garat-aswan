@@ -21,7 +21,7 @@
       <span class="logo-text">WT <span>Store</span></span>
     </div>
 
-    <!-- إضافة الإيموشنز لجميع الأقسام وتعديل الحركة -->
+    <!-- الروابط مع الإيموشنز الصحيحة والتنقل السلس -->
     <ul class="nav-links">
       <li><a href="#home" onclick="navigate('home')">🏠 الرئيسية</a></li>
       <li><a href="#productsSection" onclick="scrollToSection('productsSection')">🛍️ المنتجات</a></li>
@@ -30,7 +30,8 @@
     </ul>
 
     <div class="header-actions">
-      <a class="cart-btn" onclick="navigate('cart')">
+      <!-- زر السلة المظبوط مع الإيموشن -->
+      <a class="cart-btn" onclick="navigate('cart')" style="cursor: pointer;">
         🛒<span class="cart-count" id="cartCount">0</span>
       </a>
       <button class="btn btn-primary" onclick="scrollToSection('productsSection')">تسوق الآن</button>
@@ -41,7 +42,7 @@
   </div>
 </header>
 
-<!-- ===== Mobile Menu (مع الإيموشنز) ===== -->
+<!-- ===== Mobile Menu ===== -->
 <div class="mobile-menu" id="mobileMenu">
   <a onclick="navigate('home')">🏠 الرئيسية</a>
   <a onclick="scrollToSection('productsSection')">🛍️ المنتجات</a>
