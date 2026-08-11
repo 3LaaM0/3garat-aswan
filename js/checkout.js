@@ -1,78 +1,63 @@
-// ============================================
-// الطلبات (localStorage) + إرسال واتساب
-// ============================================
-const Orders = {
-  KEY: "wtstore_orders",
+// كود إرسال الطلب من موقع WT Store مباشرة إلى تليجرام
+document.addEventListener('DOMContentLoaded', () => {
+    const checkoutButton = document.querySelector('button, .checkout-btn'); // زر تأكيد الطلب
 
-  getAll() {
-    try {
-      const raw = localStorage.getItem(this.KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', async function (e) {
+            e.preventDefault(); // منع إعادة تحميل الصفحة
+
+            // 1. جلب البيانات من الحقول الموجودة في الصفحة عندك
+            const fullName = document.querySelector('input[placeholder*="أحمد محمد"]')?.value || '';
+            const phone = document.querySelector('input[placeholder="01xxxxxxxxxx"]')?.value || '';
+            const whatsappInputs = document.querySelectorAll('input[placeholder="01xxxxxxxxxx"]');
+            const whatsapp = whatsappInputs.length > 1 ? whatsappInputs[1].value : phone;
+            const city = document.querySelector('input[placeholder*="القاهرة"]')?.value || '';
+            const address = document.querySelector('textarea[placeholder*="اسم الشارع"]')?.value || '';
+            const notes = document.querySelector('textarea[placeholder*="أي تفاصيل إضافية"]')?.value || '';
+
+            // 2. بيانات البوت الخاص بك (ضع بياناتك هنا)
+            const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw'; 
+            const chatId = '5535861156'; 
+
+            // 3. تنسيق رسالة التليجرام
+            const message = `
+🔔 طلب جديد من متجر WT Store!
+
+👤 الاسم: ${fullName}
+📞 الهاتف: ${phone}
+💬 واتساب: ${whatsapp}
+📍 المحافظة / المدينة: ${city}
+🏠 العنوان: ${address}
+📝 ملاحظات: ${notes || 'لا يوجد'}
+            `.trim();
+
+            // 4. إرسال الطلب لـ Telegram API
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.ok) {
+                    alert('تم تأكيد طلبك بنجاح! سيتم التواصل معك قريباً.');
+                    // ممكن تفريغ السلة أو إعادة توجيه الصفحة هنا لو تحب
+                } else {
+                    alert('حدث خطأ أثناء إرسال الطلب، تأكد من البيانات.');
+                }
+            } catch (error) {
+                console.error('خطأ في الاتصال:', error);
+                alert('فشل الاتصال، تحقق من شبكة الإنترنت.');
+            }
+        });
     }
-  },
-
-  save(order) {
-    const orders = this.getAll();
-    orders.push(order);
-    localStorage.setItem(this.KEY, JSON.stringify(orders));
-  },
-
-  findByNumberAndPhone(orderNumber, phone) {
-    const orders = this.getAll();
-    return orders.find(
-      o => o.orderNumber.trim() === orderNumber.trim() && o.phone.trim() === phone.trim()
-    );
-  },
-
-  generateOrderNumber() {
-    const year = new Date().getFullYear();
-    const rand = Math.floor(10000 + Math.random() * 89999);
-    return `QR-${year}-${rand}`;
-  },
-
-  // نقطة اتصال جاهزة لإرسال الطلب لأتمتة خارجية (n8n / Make / Zapier / Webhook)
-  // استبدل الدالة دي بطلب fetch حقيقي لما يبقى عندك endpoint
-  sendToAutomation(order) {
-    // مثال جاهز للاستخدام لاحقاً:
-    // fetch("YOUR_WEBHOOK_URL", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(order)
-    // });
-    console.log("Order ready for automation webhook:", order);
-  }
-};
-
-function buildWhatsAppMessage(order) {
-  const productsList = order.items
-    .map(i => `- ${i.name} × ${i.qty} = ${i.price * i.qty} ${STORE_CONFIG.currency}`)
-    .join("\n");
-
-  const message =
-`طلب جديد من ${STORE_CONFIG.storeName} 🛍️
-
-رقم الطلب: ${order.orderNumber}
-الاسم: ${order.name}
-الهاتف: ${order.phone}
-واتساب: ${order.whatsapp}
-المحافظة: ${order.province}
-المدينة: ${order.city}
-العنوان: ${order.address}
-${order.notes ? `ملاحظات: ${order.notes}` : ""}
-
-المنتجات:
-${productsList}
-
-الإجمالي: ${order.total} ${STORE_CONFIG.currency}
-حالة الطلب: ${order.status}`;
-
-  return encodeURIComponent(message);
-}
-
-function openWhatsAppOrder(order) {
-  const text = buildWhatsAppMessage(order);
-  const url = `https://wa.me/${STORE_CONFIG.whatsappNumber}?text=${text}`;
-  window.open(url, "_blank");
-}
+});
