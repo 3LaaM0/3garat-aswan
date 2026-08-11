@@ -97,7 +97,6 @@ function renderProductDetails(id) {
   const el = document.getElementById("view-product");
   if (!el) return;
 
-  // توليد عدد عشوائي كبير ومفتوح للمشاهدين بين 45 و 125 شخص
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
 
   el.innerHTML = `
@@ -110,7 +109,6 @@ function renderProductDetails(id) {
         <div class="details-info">
           <h1>${product.name}</h1>
           
-          <!-- عداد المشاهدين الحي -->
           <div class="live-viewers" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 77, 77, 0.15); color: #ff4d4d; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 10px; border: 1px solid rgba(255, 77, 77, 0.3);">
             <span style="width: 8px; height: 8px; background-color: #ff4d4d; border-radius: 50%; display: inline-block; animation: pulse-dot 1.5s infinite;"></span>
             🔥 الآن يُشاهد هذا المنتج ${randomViewers} شخصاً
@@ -121,7 +119,6 @@ function renderProductDetails(id) {
             <span class="old-price">${product.oldPrice} ${STORE_CONFIG.currency}</span>
           </div>
           
-          <!-- قسم النجوم والتقييم -->
           <div class="product-rating" style="display: flex; align-items: center; gap: 8px; margin: 10px 0; color: #ffaa00; font-size: 14px;">
             <span>⭐⭐⭐⭐⭐</span>
             <strong style="color: #fff;">4.9 / 5</strong>
@@ -133,7 +130,6 @@ function renderProductDetails(id) {
             ${product.specs.map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
 
-          <!-- آراء العملاء المصغرة -->
           <div class="customer-reviews-box" style="background: #151515; border: 1px solid #222; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <h4 style="color: #fff; margin-bottom: 8px; font-size: 15px;">💬 آراء بعض العملاء:</h4>
             <p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">"المنتج وصلني أصلي وبنفس المواصفات، جودة الصوت والخامة ممتازة جداً أنصح به." - <b>محمد أ.</b></p>
@@ -157,7 +153,6 @@ function renderProductDetails(id) {
   window._detailQty = 1;
 }
 
-// إضافة تأثير النبض البسيط للنقطة الحمراء
 if (!document.getElementById('live-pulse-style')) {
   const styleTag = document.createElement('style');
   styleTag.id = 'live-pulse-style';
@@ -327,7 +322,6 @@ function renderCheckoutView() {
     if (btn) {
       btn.onclick = executeOrderSubmission;
     }
-    // السماح بإدخال أرقام فقط في حقلي الهاتف والواتساب
     ["fPhone", "fWhatsapp"].forEach(id => {
       const input = document.getElementById(id);
       if (input) {
@@ -367,7 +361,6 @@ async function executeOrderSubmission(e) {
     }
   }
 
-  // التحقق من صحة رقم الهاتف ورقم الواتساب (رقم مصري مكوّن من 11 رقم)
   ["fPhone", "fWhatsapp"].forEach(id => {
     const errEl = document.getElementById(`err-${id}`);
     if (values[id] && !EGY_PHONE_REGEX.test(values[id])) {
@@ -468,7 +461,7 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- تتبع الطلب ----------
+// ---------- تتبع الطلب (محدث ليتفاعل مع الحالات الحقيقية) ----------
 function submitTracking(e) {
   e.preventDefault();
   const orderNumber = document.getElementById("trackOrderNumber").value.trim();
@@ -495,17 +488,25 @@ function submitTracking(e) {
     return;
   }
 
+  const currentStatus = order.status || "بانتظار التأكيد";
+  
+  const step1 = "color: #00ff66;";
+  const step2 = (currentStatus === "جاري التجهيز" || currentStatus === "في طريقها للتوصيل" || currentStatus === "تم التسليم") ? "color: #00ff66;" : "color: #888;";
+  const step3 = (currentStatus === "في طريقها للتوصيل" || currentStatus === "تم التسليم") ? "color: #00ff66;" : "color: #888;";
+  const step4 = (currentStatus === "تم التسليم") ? "color: #00ff66;" : "color: #888;";
+
   resultEl.innerHTML = `
     <div class="success-card fade-in" style="margin-top: 20px;">
       <h3>تفاصيل تتبع الطلب: ${order.orderNumber}</h3>
       <div class="summary-row"><span>الاسم:</span><span>${order.name}</span></div>
       <div class="summary-row"><span>الإجمالي:</span><span>${order.total} ${STORE_CONFIG.currency}</span></div>
+      <div class="summary-row"><span>الحالة الحالية:</span><span style="color: #00ff66; font-weight: bold;">${currentStatus}</span></div>
       
       <div class="tracking-steps" style="margin-top: 20px; text-align: right; line-height: 2;">
-        <div style="color: #00ff66;">✔ <b>تم استلام الطلب</b> (جاري المراجعة والتأكيد)</div>
-        <div style="color: #00ff66;">⏳ <b>جاري التجهيز</b> (المنتج يتم فحزه وتغليفه بعناية)</div>
-        <div style="color: #888;">📦 <b>في طريقها للتوصيل</b> (مع مندوب الشحن قريباً)</div>
-        <div style="color: #888;">🎉 <b>تم التسليم</b></div>
+        <div style="${step1}">✔ <b>تم استلام الطلب</b> (جاري المراجعة والتأكيد)</div>
+        <div style="${step2}">⏳ <b>جاري التجهيز</b> (المنتج يتم فحزه وتغليفه بعناية)</div>
+        <div style="${step3}">📦 <b>في طريقها للتوصيل</b> (مع مندوب الشحن قريباً)</div>
+        <div style="${step4}">🎉 <b>تم التسليم</b></div>
       </div>
     </div>
   `;
