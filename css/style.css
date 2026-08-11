@@ -331,3 +331,33 @@ textarea { resize: vertical; }
   .footer-grid { grid-template-columns: 1fr; }
   .hero { padding: 60px 0 50px; }
 }
+/* إرجاع الهيدر للترتيب الصحيح */
+.header-inner {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+.logo {
+  margin-left: 0 !important;
+}
+
+/* القائمة في المنتصف بالضبط */
+.nav-links {
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: flex !important;
+  gap: 25px !important;
+  margin: 0 !important;
+}
+
+/* زر تسوق الآن والسلة على الشمال خالص */
+.header-actions {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+}
