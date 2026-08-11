@@ -2,6 +2,18 @@
 // التطبيق الرئيسي - التنقل بين الصفحات وعرض المحتوى
 // ============================================
 
+// نمط رقم الهاتف المصري: يبدأ بـ 010 أو 011 أو 012 أو 015 ثم 8 أرقام (11 رقم بالإجمالي)
+const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
+
+// قائمة محافظات مصر الـ27
+const EGYPT_GOVERNORATES = [
+  "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة",
+  "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية",
+  "الوادي الجديد", "السويس", "أسوان", "أسيوط", "بني سويف", "بورسعيد",
+  "دمياط", "الشرقية", "جنوب سيناء", "كفر الشيخ", "مطروح", "الأقصر",
+  "قنا", "شمال سيناء", "سوهاج"
+];
+
 function navigate(view, params = {}) {
   window.scrollTo(0, 0);
   const hash = params.id ? `#${view}?id=${params.id}` : `#${view}`;
@@ -268,18 +280,21 @@ function renderCheckoutView() {
           </div>
           <div class="form-group">
             <label>رقم الهاتف</label>
-            <input type="tel" id="fPhone" placeholder="01xxxxxxxxx">
+            <input type="tel" id="fPhone" placeholder="01xxxxxxxxx" maxlength="11" inputmode="numeric">
             <span class="error" id="err-fPhone"></span>
           </div>
           <div class="form-group">
             <label>رقم واتساب</label>
-            <input type="tel" id="fWhatsapp" placeholder="01xxxxxxxxx">
+            <input type="tel" id="fWhatsapp" placeholder="01xxxxxxxxx" maxlength="11" inputmode="numeric">
             <span class="error" id="err-fWhatsapp"></span>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>المحافظة</label>
-              <input type="text" id="fProvince" placeholder="مثال: القاهرة">
+              <select id="fProvince">
+                <option value="">اختر المحافظة</option>
+                ${EGYPT_GOVERNORATES.map(gov => `<option value="${gov}">${gov}</option>`).join("")}
+              </select>
               <span class="error" id="err-fProvince"></span>
             </div>
             <div class="form-group">
@@ -312,6 +327,15 @@ function renderCheckoutView() {
     if (btn) {
       btn.onclick = executeOrderSubmission;
     }
+    // السماح بإدخال أرقام فقط في حقلي الهاتف والواتساب
+    ["fPhone", "fWhatsapp"].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/[^0-9]/g, "").slice(0, 11);
+        });
+      }
+    });
   }, 100);
 }
 
@@ -342,6 +366,16 @@ async function executeOrderSubmission(e) {
       }
     }
   }
+
+  // التحقق من صحة رقم الهاتف ورقم الواتساب (رقم مصري مكوّن من 11 رقم)
+  ["fPhone", "fWhatsapp"].forEach(id => {
+    const errEl = document.getElementById(`err-${id}`);
+    if (values[id] && !EGY_PHONE_REGEX.test(values[id])) {
+      if (errEl) errEl.textContent = "يرجى إدخال رقم مصري صحيح مكوّن من 11 رقم (يبدأ بـ 010 أو 011 أو 012 أو 015)";
+      valid = false;
+    }
+  });
+
   if (!valid) return;
 
   const items = Cart.detailedItems();
