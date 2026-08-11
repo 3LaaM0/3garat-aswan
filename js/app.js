@@ -484,3 +484,59 @@ document.addEventListener("DOMContentLoaded", () => {
   const { view, params } = parseHash();
   renderView(view, params);
 });
+
+// --- لوحة التحكم المخفية ---
+function renderAdminPanel() {
+  const el = document.getElementById("view-admin");
+  const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+  el.innerHTML = `<div class="container"><h1>لوحة التحكم</h1>
+    <table style="width:100%; border:1px solid #ccc; text-align:center;">
+      ${savedOrders.map((o, i) => `<tr>
+        <td>${o.orderNumber}</td><td>${o.status}</td>
+        <td>
+          <button onclick="updateOrderStatus(${i}, 'جاري التجهيز')">تجهيز</button>
+          <button onclick="updateOrderStatus(${i}, 'في طريقها للتوصيل')">شحن</button>
+          <button onclick="updateOrderStatus(${i}, 'تم التسليم')">تسليم</button>
+        </td>
+      </tr>`).join('')}
+    </table></div>`;
+}
+
+function updateOrderStatus(index, newStatus) {
+  let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+  savedOrders[index].status = newStatus;
+  localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
+  renderAdminPanel();
+  showToast("تم تحديث الحالة إلى: " + newStatus);
+}
+
+// --- تتبع الطلب المحدث (يقرأ الحالة من اللوحة) ---
+function submitTracking(e) {
+  e.preventDefault();
+  const num = document.getElementById("trackOrderNumber").value.trim();
+  const phone = document.getElementById("trackPhone").value.trim();
+  const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+  const order = savedOrders.find(o => o.orderNumber === num && o.phone === phone);
+  
+  const res = document.getElementById("trackingResult");
+  if (!order) return res.innerHTML = "طلب غير موجود";
+
+  res.innerHTML = `<h3>الحالة: ${order.status}</h3>
+    <div style="text-align:right;">
+      <div style="color:${order.status === 'بانتظار التأكيد' ? '#00ff66' : '#888'}">✔ تم استلام الطلب</div>
+      <div style="color:${order.status === 'جاري التجهيز' ? '#00ff66' : '#888'}">⏳ جاري التجهيز</div>
+      <div style="color:${order.status === 'في طريقها للتوصيل' ? '#00ff66' : '#888'}">📦 في طريق التوصيل</div>
+      <div style="color:${order.status === 'تم التسليم' ? '#00ff66' : '#888'}">🎉 تم التسليم</div>
+    </div>`;
+}
+
+// تعديل دالة renderView لإضافة دعم الـ admin
+function renderView(view, params) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  const target = document.getElementById(`view-${view}`);
+  if (target) target.classList.add("active");
+  else document.getElementById("view-home").classList.add("active");
+
+  if (view === "admin") renderAdminPanel();
+  // ... باقي الشروط ...
+}
