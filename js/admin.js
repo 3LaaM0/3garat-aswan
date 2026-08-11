@@ -161,3 +161,7 @@ function renderAdminProducts() {
   html += `</tbody></table>`;
   container.innerHTML = html;
 }
+// لا تقم بتشغيل أكواد الأدمن إلا إذا كنا في صفحة admin.html
+if (window.location.pathname.includes('admin.html')) {
+  // باقي كود الأدمن هنا كله...
+}
