@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم الاحترافية - WT Store</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* تصميم لوحة التحكم الفخمة */
+    :root {
+      --bg-color: #0f0f0f;
+      --panel-bg: #181818;
+      --sidebar-bg: #121212;
+      --text-color: #ffffff;
+      --text-muted: #888888;
+      --border-color: #2a2a2a;
+      --primary-color: #00ff66;
+    }
+    .light-mode {
+      --bg-color: #f4f6f9;
+      --panel-bg: #ffffff;
+      --sidebar-bg: #ffffff;
+      --text-color: #333333;
+      --text-muted: #666666;
+      --border-color: #e2e8f0;
+      --primary-color: #00a843;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      font-family: Tahoma, sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* القائمة الجانبية */
+    .admin-sidebar {
+      width: 260px;
+      background-color: var(--sidebar-bg);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar-header {
+      padding: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar-menu li a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 14px;
+      border-right: 3px solid transparent;
+      transition: 0.2s;
+    }
+    .sidebar-menu li.active a, .sidebar-menu li a:hover {
+      background-color: rgba(0, 255, 102, 0.1);
+      color: var(--primary-color);
+      border-right-color: var(--primary-color);
+    }
+
+    /* المحتوى الرئيسي */
+    .admin-main {
+      flex: 1;
+      margin-right: 260px;
+      padding: 30px;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      background: var(--panel-bg);
+      padding: 15px 25px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+    .admin-user {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .theme-toggle-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* شبكة الإحصائيات والأقسام */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background-color: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-card h3 {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .stat-card .number {
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--primary-color);
+    }
+
+    .section-content {
+      display: none;
+    }
+    .section-content.active {
+      display: block;
+    }
+
+    .table-container {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow-x: auto;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: right;
+    }
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+    th {
+      color: var(--text-muted);
+    }
+    .action-btn {
+      padding: 6px 12px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      margin-left: 5px;
+    }
+    .btn-green { background: #00ff66; color: #000; font-weight: bold; }
+    .btn-blue { background: #0088ff; color: #fff; }
+    .btn-red { background: #ff4d4d; color: #fff; }
+  </style>
+</head>
+<body class="dark-mode">
+
+  <div class="admin-layout">
+    <!-- القائمة الجانبية -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <span>لوحة التحكم</span>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeIcon">☀️</button>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="active" onclick="switchSection('home', this)"><a href="#">🏠 الرئيسية</a></li>
+        <li onclick="switchSection('products', this)"><a href="#">📦 المنتجات</a></li>
+        <li onclick="switchSection('categories', this)"><a href="#">🏷️ الفئات</a></li>
+        <li onclick="switchSection('orders', this)"><a href="#">🛒 الطلبات</a></li>
+        <li onclick="switchSection('customers', this)"><a href="#">👥 العملاء</a></li>
+        <li onclick="switchSection('coupons', this)"><a href="#">🎟️ الكوبونات</a></li>
+        <li onclick="switchSection('offers', this)"><a href="#">🔥 العروض</a></li>
+        <li onclick="switchSection('reviews', this)"><a href="#">⭐ التقييمات</a></li>
+        <li onclick="switchSection('banners', this)"><a href="#">🖼️ البانرات</a></li>
+        <li onclick="switchSection('analytics', this)"><a href="#">📊 التحليلات</a></li>
+        <li onclick="switchSection('settings', this)"><a href="#">⚙️ الإعدادات</a></li>
+        <li><a href="index.html" style="color: #ff4d4d;">🚪 العودة للمتجر</a></li>
+      </ul>
+    </aside>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="admin-main">
+      <div class="admin-header">
+        <h2 id="sectionTitle">نظرة عامة على المتجر</h2>
+        <div class="admin-user">مرحباً، الأدمن علاء 👤</div>
+      </div>
+
+      <!-- قسم الرئيسية والإحصائيات -->
+      <div id="sec-home" class="section-content active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>إجمالي الطلبات</h3>
+            <div class="number" id="statTotalOrders">0</div>
+          </div>
+          <div class="stat-card">
+            <h3>إجمالي الإيرادات</h3>
+            <div class="number" id="statTotalRevenue">0 ج.م</div>
+          </div>
+          <div class="stat-card">
+            <h3>المنتجات المتاحة</h3>
+            <div class="number" id="statTotalProducts">4</div>
+          </div>
+          <div class="stat-card">
+            <h3>طلبات معلقة</h3>
+            <div class="number" id="statPendingOrders">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم إدارة المنتجات -->
+      <div id="sec-products" class="section-content">
+        <div class="table-container">
+          <h3>إدارة المنتجات</h3>
+          <p style="color: var(--text-muted); font-size: 13px;">يمكنك إضافة أو تعديل منتجات المتجر مباشرة.</p>
+          <div id="productsTableContainer"></div>
+        </div>
+      </div>
+
+      <!-- قسم الطلبات -->
+      <div id="sec-orders" class="section-content">
+        <div class="table-container">
+          <h3>طلبات العملاء الحالية</h3>
+          <div id="adminOrdersTable"></div>
+        </div>
+      </div>
+
+      <!-- باقي الأقسام الفارغة احترافياً -->
+      <div id="sec-categories" class="section-content"><div class="table-container"><h3>إدارة الفئات</h3><p>قريباً...</p></div></div>
+      <div id="sec-customers" class="section-content"><div class="table-container"><h3>قائمة العملاء</h3><p>قريباً...</p></div></div>
+      <div id="sec-coupons" class="section-content"><div class="table-container"><h3>إدارة الكوبونات</h3><p>قريباً...</p></div></div>
+      <div id="sec-offers" class="section-content"><div class="table-container"><h3>العروض والخصومات</h3><p>قريباً...</p></div></div>
+      <div id="sec-reviews" class="section-content"><div class="table-container"><h3>تقييمات العملاء</h3><p>قريباً...</p></div></div>
+      <div id="sec-banners" class="section-content"><div class="table-container"><h3>إدارة البانرات والصور</h3><p>قريباً...</p></div></div>
+      <div id="sec-analytics" class="section-content"><div class="table-container"><h3>التحليلات والتقارير</h3><p>قريباً...</p></div></div>
+      <div id="sec-settings" class="section-content"><div class="table-container"><h3>إعدادات المتجر</h3><p>تعديل العملة، أسعار الشحن، وربط تليجرام.</p></div></div>
+
+    </main>
+  </div>
+
+  <script src="js/products.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
