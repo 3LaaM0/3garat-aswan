@@ -217,7 +217,7 @@
     </section>
   </main>
 
-  <!-- Add Product Modal مع رفع الصور المباشر -->
+  <!-- Add Product Modal -->
   <div class="modal" id="addProductModal">
     <div class="modal-content">
       <h3>إضافة منتج جديد</h3>
@@ -268,18 +268,24 @@
 
     let uploadedImageBase64 = "assets/logo.jpg";
     let cloudOrders = [];
+    let adminCloudProducts = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       initAdminPage();
     });
 
     function initAdminPage() {
-      renderProducts();
-      listenToCloudOrders();
-    }
+      // الاستماع الفوري للمنتجات من السحابة
+      db.collection("products").onSnapshot((snapshot) => {
+        adminCloudProducts = [];
+        snapshot.forEach((doc) => {
+          adminCloudProducts.push({ docId: doc.id, ...doc.data() });
+        });
+        renderProducts();
+        updateStats();
+      });
 
-    // الاستماع الفوري للطلبات من سحابة Firebase
-    function listenToCloudOrders() {
+      // الاستماع الفوري للطلبات من السحابة
       db.collection("orders").onSnapshot((snapshot) => {
         cloudOrders = [];
         snapshot.forEach((doc) => {
@@ -287,19 +293,13 @@
         });
         renderOrders();
         updateStats();
-      }, (error) => {
-        console.error("خطأ في جلب الطلبات السحابية:", error);
       });
     }
 
-    // جلب قائمة المنتجات
     function getProductsList() {
-      const saved = localStorage.getItem('wt_custom_products');
-      if (saved) return JSON.parse(saved);
-      return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
+      return adminCloudProducts.length > 0 ? adminCloudProducts : (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []);
     }
 
-    // معالجة اختيار صورة من الجهاز وتحويلها لـ Base64
     function handleImageUpload(event) {
       const file = event.target.files[0];
       if (file) {
@@ -314,7 +314,6 @@
       }
     }
 
-    // عرض المنتجات في جدول الأدمن
     function renderProducts() {
       const tbody = document.getElementById('adminProductsTable');
       if (!tbody) return;
@@ -338,14 +337,19 @@
       `).join('');
     }
 
-    // حذف منتج وتحديث المتجر فوراً
-    function deleteProduct(idx) {
-      if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
-        let products = getProductsList();
-        products.splice(idx, 1);
-        localStorage.setItem('wt_custom_products', JSON.stringify(products));
-        initAdminPage();
-        renderProducts();
+    // حذف منتج سحابياً من Firebase
+    async function deleteProduct(idx) {
+      if (confirm("هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر لدى جميع الزوار؟")) {
+        const products = getProductsList();
+        const target = products[idx];
+        if (target && target.docId) {
+          try {
+            await db.collection("products").doc(target.docId).delete();
+            alert("تم حذف المنتج سحابياً بنجاح!");
+          } catch (err) {
+            console.error("خطأ في حذف المنتج:", err);
+          }
+        }
       }
     }
 
@@ -362,8 +366,8 @@
       document.getElementById('addProductModal').classList.remove('active');
     }
 
-    // حفظ منتج جديد بالصورة المرفوعة
-    function saveNewProduct() {
+    // حفظ منتج جديد سحابياً في Firebase
+    async function saveNewProduct() {
       const name = document.getElementById('newProdName').value.trim();
       const price = document.getElementById('newProdPrice').value.trim();
       const oldPrice = document.getElementById('newProdOldPrice').value.trim();
@@ -374,7 +378,6 @@
         return;
       }
 
-      let products = getProductsList();
       const newProd = {
         id: Date.now(),
         name: name,
@@ -386,21 +389,21 @@
         specs: ["ضمان أصلية 100%", "شحن سريع"]
       };
 
-      products.push(newProd);
-      localStorage.setItem('wt_custom_products', JSON.stringify(products));
+      try {
+        await db.collection("products").add(newProd);
 
-      document.getElementById('newProdName').value = '';
-      document.getElementById('newProdPrice').value = '';
-      document.getElementById('newProdOldPrice').value = '';
-      document.getElementById('newProdDesc').value = '';
+        document.getElementById('newProdName').value = '';
+        document.getElementById('newProdPrice').value = '';
+        document.getElementById('newProdOldPrice').value = '';
+        document.getElementById('newProdDesc').value = '';
 
-      closeAddModal();
-      initAdminPage();
-      renderProducts();
-      alert("تمت إضافة المنتج بنجاح وسيظهر في المتجر فوراً!");
+        closeAddModal();
+        alert("تمت إضافة المنتج سحابياً وسيظهر عند كل الزوار فوراً!");
+      } catch (err) {
+        console.error("خطأ في حفظ المنتج سحابياً:", err);
+      }
     }
 
-    // عرض الطلبات السحابية وتعديل حالتها
     function renderOrders() {
       const dashTbody = document.getElementById('dashboardOrdersTable');
       const allTbody = document.getElementById('allOrdersTable');
@@ -448,7 +451,6 @@
       }
     }
 
-    // تحديث حالة الطلب سحابياً في Firebase
     function updateOrderStatus(docId, newStatus) {
       db.collection("orders").doc(docId).update({
         status: newStatus
@@ -459,7 +461,6 @@
       });
     }
 
-    // تحديث الإحصائيات الحقيقية
     function updateStats() {
       const products = getProductsList();
       let totalRevenue = 0;
@@ -473,7 +474,6 @@
       document.getElementById('statPendingCount').textContent = cloudOrders.filter(o => (o.status || 'بانتظار التأكيد') === 'بانتظار التأكيد').length;
     }
 
-    // التبديل بين الأقسام
     function showAdminTab(tabName) {
       document.querySelectorAll('.admin-section').forEach(sec => {
         sec.style.display = 'none';
@@ -502,7 +502,6 @@
       document.getElementById('pageTitle').textContent = titles[tabName] || "لوحة التحكم";
     }
 
-    // زرار النمط الليلي والنهاري (Night Mode)
     function toggleTheme() {
       document.body.classList.toggle('dark-mode');
       const icon = document.getElementById('themeIcon');
