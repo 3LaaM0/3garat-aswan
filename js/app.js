@@ -43,7 +43,6 @@ if (!document.getElementById("page-motion-styles")) {
 function navigate(view, params = {}) {
   closeMobileMenu();
   
-  // معالجة الأقسام داخل الصفحة الرئيسية
   if (view === "products" || view === "productsGrid" || view === "productsSection") {
     scrollToSection("productsSection");
     return;
@@ -262,52 +261,60 @@ function buyNow(id) {
 function renderCartView() {
   const el = document.getElementById("view-cart");
   if (!el) return;
+
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active", "page-motion-enter");
+    v.style.display = "none";
+  });
+  el.style.display = "block";
+  el.classList.add("active", "page-motion-enter");
+
   const items = Cart.detailedItems();
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     el.innerHTML = `
-      <div class="container">
+      <div class="container" style="padding: 60px 0; text-align: center;">
         <h1 class="page-title">سلة التسوق</h1>
         <div class="empty-state">
-          <div class="empty-icon">🛒</div>
-          <p>السلة فارغة</p>
-          <button class="btn btn-primary" onclick="navigate('home')">تصفح المنتجات</button>
+          <div class="empty-icon" style="font-size: 50px; margin-bottom: 15px;">🛒</div>
+          <p style="color: var(--text-muted); font-size: 18px;">السلة فارغة</p>
+          <button class="btn btn-primary" onclick="navigate('home')" style="margin-top: 20px;">تصفح المنتجات</button>
         </div>
       </div>`;
     return;
   }
 
   const rows = items.map(i => `
-    <div class="cart-row">
-      <img src="${i.image}" alt="${i.name}" onerror="this.src='assets/logo.jpg'">
-      <div class="cart-row-info">
-        <h4>${i.name}</h4>
-        <span class="price">${i.price} ${STORE_CONFIG.currency}</span>
+    <div class="cart-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border);">
+      <img src="${i.image}" alt="${i.name}" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.src='assets/logo.jpg'">
+      <div class="cart-row-info" style="flex: 1; padding: 0 15px; text-align: right;">
+        <h4 style="margin: 0 0 5px; color: var(--text-main);">${i.name}</h4>
+        <span class="price" style="color: var(--accent-green); font-weight: bold;">${i.price} ${STORE_CONFIG.currency}</span>
       </div>
-      <div class="cart-qty">
-        <button onclick="Cart.decrease(${i.id}); renderCartView();">−</button>
+      <div class="cart-qty" style="display: flex; align-items: center; gap: 10px;">
+        <button onclick="Cart.decrease(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">−</button>
         <span>${i.qty}</span>
-        <button onclick="Cart.increase(${i.id}); renderCartView();">+</button>
+        <button onclick="Cart.increase(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">+</button>
       </div>
-      <div class="cart-row-total">${i.price * i.qty} ${STORE_CONFIG.currency}</div>
-      <button class="remove-btn" onclick="Cart.remove(${i.id}); renderCartView();">✕</button>
+      <div class="cart-row-total" style="font-weight: bold; padding: 0 15px;">${i.price * i.qty} ${STORE_CONFIG.currency}</div>
+      <button class="remove-btn" onclick="Cart.remove(${i.id}); renderCartView(); Cart.updateCounter();" style="background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer;">✕</button>
     </div>
   `).join("");
 
   el.innerHTML = `
-    <div class="container">
-      <h1 class="page-title">سلة التسوق</h1>
-      <div class="cart-layout">
+    <div class="container" style="padding: 40px 20px;">
+      <h1 class="page-title" style="margin-bottom: 25px; text-align: right;">سلة التسوق</h1>
+      <div class="cart-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
         <div class="cart-items">
           ${rows}
-          <button class="btn btn-text" onclick="Cart.clear(); renderCartView();">إفراغ السلة</button>
+          <button class="btn btn-text" onclick="Cart.clear(); renderCartView(); Cart.updateCounter();" style="margin-top: 15px; color: var(--danger); background: none; border: none; cursor: pointer; font-weight: bold;">إفراغ السلة</button>
         </div>
-        <div class="cart-summary">
-          <h3>ملخص الطلب</h3>
-          <div class="summary-row"><span>المجموع الفرعي</span><span>${Cart.subtotal()} ${STORE_CONFIG.currency}</span></div>
-          <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency}</span></div>
-          <button class="btn btn-primary btn-lg full" onclick="navigate('checkout')">إتمام الطلب</button>
-          <button class="btn btn-outline full" onclick="navigate('home')">متابعة التسوق</button>
+        <div class="cart-summary" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); height: fit-content;">
+          <h3 style="margin-bottom: 15px;">ملخص الطلب</h3>
+          <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-muted);"><span>المجموع الفرعي</span><span>${Cart.subtotal()} ${STORE_CONFIG.currency}</span></div>
+          <div class="summary-row total" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px; color: var(--text-main);"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency}</span></div>
+          <button class="btn btn-primary btn-lg full" onclick="navigate('checkout')" style="width: 100%; margin-bottom: 10px; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">إتمام الطلب</button>
+          <button class="btn btn-outline full" onclick="navigate('home')" style="width: 100%; padding: 12px; background: none; border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; font-weight: bold; cursor: pointer;">متابعة التسوق</button>
         </div>
       </div>
     </div>`;
