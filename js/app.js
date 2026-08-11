@@ -461,7 +461,7 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- تتبع الطلب (محدث ومضمون للحالات) ----------
+// ---------- تتبع الطلب ----------
 function submitTracking(e) {
   e.preventDefault();
   const orderNumber = document.getElementById("trackOrderNumber").value.trim();
@@ -489,22 +489,14 @@ function submitTracking(e) {
   }
 
   const status = order.status || "بانتظار التأكيد";
-
-  // الألوان بناءً على حالة الطلب الحقيقية
   let s1 = "color: #00ff66;", s2 = "color: #888;", s3 = "color: #888;", s4 = "color: #888;";
 
   if (status === "جاري التجهيز") {
-    s1 = "color: #00ff66;";
-    s2 = "color: #00ff66;";
+    s1 = "color: #00ff66;"; s2 = "color: #00ff66;";
   } else if (status === "في طريقها للتوصيل") {
-    s1 = "color: #00ff66;";
-    s2 = "color: #00ff66;";
-    s3 = "color: #00ff66;";
+    s1 = "color: #00ff66;"; s2 = "color: #00ff66;"; s3 = "color: #00ff66;";
   } else if (status === "تم التسليم") {
-    s1 = "color: #00ff66;";
-    s2 = "color: #00ff66;";
-    s3 = "color: #00ff66;";
-    s4 = "color: #00ff66;";
+    s1 = "color: #00ff66;"; s2 = "color: #00ff66;"; s3 = "color: #00ff66;"; s4 = "color: #00ff66;";
   }
 
   resultEl.innerHTML = `
@@ -549,6 +541,22 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
+// ---------- وضع الليل والنهار للمتجر الرئيسي ----------
+function toggleStoreTheme() {
+  const body = document.body;
+  const btn = document.getElementById('storeThemeBtn');
+  
+  if (body.classList.contains('light-store-mode')) {
+    body.classList.remove('light-store-mode');
+    if(btn) btn.textContent = '🌙 الوضع الليلي';
+    localStorage.setItem('wt_store_theme', 'dark');
+  } else {
+    body.classList.add('light-store-mode');
+    if(btn) btn.textContent = '☀️ الوضع النهاري';
+    localStorage.setItem('wt_store_theme', 'light');
+  }
+}
+
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
   renderProductGrid();
@@ -566,30 +574,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ig) ig.href = STORE_CONFIG.instagramUrl;
   if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
 
-  const { view, params } = parseHash();
-  renderView(view, params);
-});
-function toggleStoreTheme() {
-  const body = document.body;
-  const btn = document.getElementById('storeThemeBtn');
-  
-  if (body.classList.contains('light-store-mode')) {
-    body.classList.remove('light-store-mode');
-    if(btn) btn.textContent = '🌙 الوضع الليلي';
-    localStorage.setItem('wt_store_theme', 'dark');
-  } else {
-    body.classList.add('light-store-mode');
-    if(btn) btn.textContent = '☀️ الوضع النهاري';
-    localStorage.setItem('wt_store_theme', 'light');
-  }
-}
-
-// تحميل الثيم المحفوظ عند فتح الموقع
-document.addEventListener('DOMContentLoaded', () => {
+  // استرجاع وضع الثيم المحفوظ
   const savedTheme = localStorage.getItem('wt_store_theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light-store-mode');
     const btn = document.getElementById('storeThemeBtn');
     if(btn) btn.textContent = '☀️ الوضع النهاري';
   }
+
+  const { view, params } = parseHash();
+  renderView(view, params);
 });
