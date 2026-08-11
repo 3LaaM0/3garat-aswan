@@ -8,6 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- مكتبات Firebase السحابية -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <style>
     :root {
       --primary: #2563eb;
@@ -248,7 +253,21 @@
 
   <script src="js/products.js"></script>
   <script>
+    // إعدادات الاتصال بـ Firebase السحابي الخاص بك
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgiUuOxa9JKG3lTonpl8uYPaJBlUSisAU",
+      authDomain: "wt-store-a71af-3c9a7.firebaseapp.com",
+      projectId: "wt-store-a71af-3c9a7",
+      storageBucket: "wt-store-a71af-3c9a7.appspot.com",
+      messagingSenderId: "500683952997",
+      appId: "1:500683952997:web:f64872a5676cde173e878c"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     let uploadedImageBase64 = "assets/logo.jpg";
+    let cloudOrders = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       initAdminPage();
@@ -256,11 +275,24 @@
 
     function initAdminPage() {
       renderProducts();
-      renderOrders();
-      updateStats();
+      listenToCloudOrders();
     }
 
-    // جلب قائمة المنتجات المحدثة
+    // الاستماع الفوري للطلبات من سحابة Firebase
+    function listenToCloudOrders() {
+      db.collection("orders").onSnapshot((snapshot) => {
+        cloudOrders = [];
+        snapshot.forEach((doc) => {
+          cloudOrders.push({ docId: doc.id, ...doc.data() });
+        });
+        renderOrders();
+        updateStats();
+      }, (error) => {
+        console.error("خطأ في جلب الطلبات السحابية:", error);
+      });
+    }
+
+    // جلب قائمة المنتجات
     function getProductsList() {
       const saved = localStorage.getItem('wt_custom_products');
       if (saved) return JSON.parse(saved);
@@ -306,20 +338,23 @@
       `).join('');
     }
 
-    // حذف منتج وتحديث المتجر فورا
+    // حذف منتج وتحديث المتجر فوراً
     function deleteProduct(idx) {
       if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
         let products = getProductsList();
         products.splice(idx, 1);
         localStorage.setItem('wt_custom_products', JSON.stringify(products));
         initAdminPage();
+        renderProducts();
       }
     }
 
     function openAddModal() {
       uploadedImageBase64 = "assets/logo.jpg";
-      document.getElementById('newProdFile').value = '';
-      document.getElementById('previewContainer').style.display = 'none';
+      const fileInput = document.getElementById('newProdFile');
+      if (fileInput) fileInput.value = '';
+      const previewContainer = document.getElementById('previewContainer');
+      if (previewContainer) previewContainer.style.display = 'none';
       document.getElementById('addProductModal').classList.add('active');
     }
 
@@ -361,29 +396,28 @@
 
       closeAddModal();
       initAdminPage();
+      renderProducts();
       alert("تمت إضافة المنتج بنجاح وسيظهر في المتجر فوراً!");
     }
 
-    // عرض الطلبات وتعديل حالتها
+    // عرض الطلبات السحابية وتعديل حالتها
     function renderOrders() {
-      const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
       const dashTbody = document.getElementById('dashboardOrdersTable');
       const allTbody = document.getElementById('allOrdersTable');
-
       const statuses = ["بانتظار التأكيد", "جاري التجهيز", "في طريقها للتوصيل", "تم التسليم", "ملغى"];
 
       if (dashTbody) {
-        if (savedOrders.length === 0) {
+        if (cloudOrders.length === 0) {
           dashTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد طلبات واردة بعد.</td></tr>`;
         } else {
-          dashTbody.innerHTML = savedOrders.slice(-5).reverse().map(o => `
+          dashTbody.innerHTML = cloudOrders.slice(-5).reverse().map(o => `
             <tr>
               <td><b>${o.orderNumber}</b></td>
               <td>${o.name}</td>
               <td>${o.phone}</td>
               <td><b>${o.total} ج.م</b></td>
               <td>
-                <select class="status-select" onchange="updateOrderStatus('${o.orderNumber}', this.value)">
+                <select class="status-select" onchange="updateOrderStatus('${o.docId}', this.value)">
                   ${statuses.map(s => `<option value="${s}" ${(o.status || 'بانتظار التأكيد') === s ? 'selected' : ''}>${s}</option>`).join('')}
                 </select>
               </td>
@@ -393,10 +427,10 @@
       }
 
       if (allTbody) {
-        if (savedOrders.length === 0) {
+        if (cloudOrders.length === 0) {
           allTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد طلبات مسجلة.</td></tr>`;
         } else {
-          allTbody.innerHTML = savedOrders.map(o => `
+          allTbody.innerHTML = cloudOrders.map(o => `
             <tr>
               <td><b>${o.orderNumber}</b></td>
               <td>${o.name}</td>
@@ -404,7 +438,7 @@
               <td>${o.province || 'غير محدد'}</td>
               <td><b>${o.total} ج.م</b></td>
               <td>
-                <select class="status-select" onchange="updateOrderStatus('${o.orderNumber}', this.value)">
+                <select class="status-select" onchange="updateOrderStatus('${o.docId}', this.value)">
                   ${statuses.map(s => `<option value="${s}" ${(o.status || 'بانتظار التأكيد') === s ? 'selected' : ''}>${s}</option>`).join('')}
                 </select>
               </td>
@@ -414,31 +448,29 @@
       }
     }
 
-    // تغيير حالة الطلب وتحديثها فوراً للعميل
-    function updateOrderStatus(orderNumber, newStatus) {
-      let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
-      const target = savedOrders.find(o => o.orderNumber === orderNumber);
-      if (target) {
-        target.status = newStatus;
-        localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
+    // تحديث حالة الطلب سحابياً في Firebase
+    function updateOrderStatus(docId, newStatus) {
+      db.collection("orders").doc(docId).update({
+        status: newStatus
+      }).then(() => {
         updateStats();
-      }
+      }).catch((error) => {
+        console.error("خطأ في تحديث الحالة:", error);
+      });
     }
 
-    // الإحصائيات
+    // تحديث الإحصائيات الحقيقية
     function updateStats() {
-      const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
       const products = getProductsList();
-
       let totalRevenue = 0;
-      savedOrders.forEach(o => {
+      cloudOrders.forEach(o => {
         totalRevenue += parseFloat(o.total || 0);
       });
 
       document.getElementById('statRevenue').textContent = totalRevenue.toLocaleString('ar-EG') + " ج.م";
-      document.getElementById('statOrdersCount').textContent = savedOrders.length;
+      document.getElementById('statOrdersCount').textContent = cloudOrders.length;
       document.getElementById('statProductsCount').textContent = products.length;
-      document.getElementById('statPendingCount').textContent = savedOrders.filter(o => (o.status || 'بانتظار التأكيد') === 'بانتظار التأكيد').length;
+      document.getElementById('statPendingCount').textContent = cloudOrders.filter(o => (o.status || 'بانتظار التأكيد') === 'بانتظار التأكيد').length;
     }
 
     // التبديل بين الأقسام
