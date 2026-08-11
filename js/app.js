@@ -12,25 +12,11 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
-// حقن CSS الأنيميشن والموشن السلس للتنقل بين الصفحات
+// حقن أنيميشن النقطة النابضة فقط (أنيميشن ظهور الصفحات معرّف بالفعل في style.css)
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
   style.innerHTML = `
-    .view {
-      display: none;
-      opacity: 0;
-      transform: translateY(12px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
-      will-change: opacity, transform;
-    }
-    .view.active {
-      display: block;
-    }
-    .view.page-motion-enter {
-      opacity: 1;
-      transform: translateY(0);
-    }
     @keyframes pulse-dot {
       0% { transform: scale(0.95); opacity: 1; }
       50% { transform: scale(1.4); opacity: 0.4; }
@@ -84,45 +70,12 @@ function renderView(view, params) {
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 
-  const currentActive = document.querySelector(".view.active");
-  let target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
+  const target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
 
-  if (currentActive === target && target.classList.contains("page-motion-enter")) {
-    executeViewRender(view, params);
-    return;
-  }
-
-  if (currentActive) {
-    currentActive.style.opacity = "0";
-    currentActive.style.transform = "translateY(-10px)";
-    setTimeout(() => {
-      currentActive.classList.remove("active", "page-motion-enter");
-      currentActive.style.display = "none";
-      currentActive.style.transform = "";
-
-      activateTargetView(target, view, params);
-    }, 150);
-  } else {
-    activateTargetView(target, view, params);
-  }
-}
-
-function activateTargetView(target, view, params) {
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active", "page-motion-enter");
-    v.style.display = "none";
-  });
-
-  target.style.display = "block";
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   target.classList.add("active");
 
   executeViewRender(view, params);
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      target.classList.add("page-motion-enter");
-    });
-  });
 }
 
 function executeViewRender(view, params) {
@@ -261,13 +214,6 @@ function buyNow(id) {
 function renderCartView() {
   const el = document.getElementById("view-cart");
   if (!el) return;
-
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active", "page-motion-enter");
-    v.style.display = "none";
-  });
-  el.style.display = "block";
-  el.classList.add("active", "page-motion-enter");
 
   const items = Cart.detailedItems();
 
