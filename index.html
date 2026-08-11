@@ -141,7 +141,7 @@
       <div class="footer-brand">
         <img src="assets/logo.jpg" alt="WT Store">
         <p>وجهتك لأحدث الإكسسوارات التقنية بجودة عالية وتجربة شراء سهلة وموثوقة.</p>
-        <!-- الأيقونات الحقيقية للاستخدام -->
+        <!-- الأيقونات الحقيقية -->
         <div class="social-icons" style="display: flex; gap: 15px; margin-top: 15px;">
           <a id="footerFb" href="#" target="_blank" aria-label="Facebook" style="color: #fff; font-size: 20px;"><i class="fab fa-facebook-f"></i></a>
           <a id="footerWa" href="#" target="_blank" aria-label="WhatsApp" style="color: #fff; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
@@ -175,6 +175,21 @@
     </div>
   </div>
 </footer>
+
+<!-- ===== أيقونة الواتساب العائمة المتحركة ===== -->
+<div id="floating-whatsapp" style="position: fixed; bottom: 25px; left: 25px; z-index: 9999;">
+  <a href="https://wa.me/201000000000" target="_blank" aria-label="تواصل عبر واتساب" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background-color: #25d366; color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 32px; text-decoration: none; animation: pulse-whatsapp 2s infinite;">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+</div>
+
+<style>
+@keyframes pulse-whatsapp {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+</style>
 
 <!-- ===== Toast ===== -->
 <div class="toast" id="toast"></div>
