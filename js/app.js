@@ -1,5 +1,5 @@
 // ============================================
-// التطبيق الرئيسي - متجر WT Store الاحترافي (سحابي ومصحح)
+// التطبيق الرئيسي - متجر WT Store الاحترافي (سحابي ومتزامن)
 // ============================================
 
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
@@ -12,7 +12,7 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
-// حقن أنيميشن النقطة النابضة فقط (أنيميشن ظهور الصفحات معرّف بالفعل في style.css)
+// حقن أنيميشن النقطة النابضة فقط
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
@@ -85,8 +85,28 @@ function executeViewRender(view, params) {
   if (view === "myorders") renderMyOrdersView();
 }
 
-// ---------- جلب المنتجات المحدثة من LocalStorage أو الافتراضية ----------
+// ---------- جلب المنتجات السحابية الحية من Firebase ----------
+let cloudProducts = [];
+
+function initCloudProducts() {
+  if (typeof firebase !== 'undefined') {
+    const db = firebase.firestore();
+    db.collection("products").onSnapshot((snapshot) => {
+      cloudProducts = [];
+      snapshot.forEach((doc) => {
+        cloudProducts.push({ docId: doc.id, ...doc.data() });
+      });
+      renderProductGrid();
+    }, (error) => {
+      console.error("خطأ في جلب المنتجات السحابية:", error);
+    });
+  }
+}
+
 function getActiveProducts() {
+  if (cloudProducts && cloudProducts.length > 0) {
+    return cloudProducts;
+  }
   const saved = localStorage.getItem('wt_custom_products');
   if (saved) {
     try {
@@ -607,7 +627,8 @@ window.addEventListener("hashchange", () => {
 
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
-  renderProductGrid();
+  initCloudProducts(); // تفعيل المزامنة السحابية الحية للمنتجات
+  
   if (typeof Cart !== "undefined" && Cart.updateCounter) {
     Cart.updateCounter();
   }
