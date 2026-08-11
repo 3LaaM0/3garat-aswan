@@ -22,10 +22,11 @@
     </div>
 
     <ul class="nav-links">
-  <a href="#home" onclick="navigate('home')">الرئيسية</a>
-<a href="#products" onclick="navigate('products')">المنتجات</a>
-<a href="#about" onclick="navigate('about')">من نحن</a>
-<a href="#myorders" onclick="navigate('myorders')">طلباتي</a>
+  <li><a href="#home" onclick="navigate('home')">الرئيسية</a></li>
+  <li><a href="#productsGrid" onclick="document.getElementById('productsGrid')?.scrollIntoView({behavior: 'smooth'})">المنتجات</a></li>
+  <li><a href="#footer" onclick="document.querySelector('.site-footer')?.scrollIntoView({behavior: 'smooth'})">من نحن</a></li>
+  <li><a href="#myorders" onclick="navigate('myorders')">طلباتي</a></li>
+</ul>
     <div class="header-actions">
       <a class="cart-btn" onclick="navigate('cart')">
         🛒<span class="cart-count" id="cartCount">0</span>
