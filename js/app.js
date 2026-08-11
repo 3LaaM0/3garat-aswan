@@ -64,12 +64,12 @@ function parseHash() {
 // دالة العرض مع أنيميشن الموشن السلس
 function renderView(view, params) {
   // معالجة الضغط على "المنتجات" أو "من نحن"
-  if (view === "products") {
-    showHomeAndScrollTo("productsGrid");
+  if (view === "products" || view === "productsGrid" || view === "productsSection") {
+    scrollToSection("productsSection");
     return;
   }
-  if (view === "about") {
-    showHomeAndScrollTo("view-about", "footer");
+  if (view === "about" || view === "aboutSection") {
+    scrollToSection("aboutSection");
     return;
   }
 
@@ -126,54 +126,29 @@ function executeViewRender(view, params) {
   if (view === "myorders") renderMyOrdersView();
 }
 
-// التمرير السلس للأقسام داخل الصفحة الرئيسية
-function showHomeAndScrollTo(...targetIds) {
-  const homeView = document.getElementById("view-home");
-  document.querySelectorAll(".view").forEach(v => {
-    if (v !== homeView) {
-      v.classList.remove("active", "page-motion-enter");
-      v.style.display = "none";
+// ---------- جلب المنتجات المحدثة من LocalStorage أو الافتراضية ----------
+function getActiveProducts() {
+  const saved = localStorage.getItem('wt_custom_products');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
     }
-  });
-
-  if (homeView) {
-    homeView.style.display = "block";
-    homeView.classList.add("active", "page-motion-enter");
   }
-
-  setTimeout(() => {
-    let element = null;
-    for (const id of targetIds) {
-      const el = document.getElementById(id);
-      if (el) {
-        element = el;
-        break;
-      }
-    }
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    }
-  }, 100);
+  return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
-
-window.addEventListener("hashchange", () => {
-  const { view, params } = parseHash();
-  renderView(view, params);
-});
 
 // ---------- عرض المنتجات بالرئيسية من الـ LocalStorage الموحد ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
 
-  // جلب المنتجات المحدثة من الأدمن
-  const stored = localStorage.getItem('wt_custom_products');
-  const productsList = stored ? JSON.parse(stored) : (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []);
+  // جلب قائمة المنتجات بعد الحذف والإضافة في الأدمن
+  const productsList = getActiveProducts();
 
-  if (productsList.length === 0) {
-    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 40px 0;">لا توجد منتجات معروضة حالياً.</p>`;
+  if (!productsList || productsList.length === 0) {
+    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات معروضة حالياً.</p>`;
     return;
   }
 
@@ -206,9 +181,10 @@ function quickAddToCart(id, e) {
 
 // ---------- صفحة تفاصيل المنتج ----------
 function renderProductDetails(id) {
-  const product = PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
+  const productsList = getActiveProducts();
+  const product = productsList.find(p => p.id === id) || productsList[0];
   const el = document.getElementById("view-product");
-  if (!el) return;
+  if (!el || !product) return;
 
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
 
@@ -217,7 +193,7 @@ function renderProductDetails(id) {
       <button class="back-btn" onclick="navigate('home')">← العودة للمنتجات</button>
       <div class="details-grid">
         <div class="details-image">
-          <img src="${product.image}" alt="${product.name}">
+          <img src="${product.image}" alt="${product.name}" onerror="this.src='assets/logo.jpg'">
         </div>
         <div class="details-info">
           <h1>${product.name}</h1>
@@ -229,7 +205,7 @@ function renderProductDetails(id) {
 
           <div class="product-price-row large">
             <span class="price">${product.price} ${STORE_CONFIG.currency}</span>
-            <span class="old-price">${product.oldPrice} ${STORE_CONFIG.currency}</span>
+            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + STORE_CONFIG.currency : ''}</span>
           </div>
           
           <div class="product-rating" style="display: flex; align-items: center; gap: 8px; margin: 10px 0; color: #ffaa00; font-size: 14px;">
@@ -238,9 +214,9 @@ function renderProductDetails(id) {
             <span style="color: #888;">(142 تقييم عميل)</span>
           </div>
 
-          <p class="details-desc">${product.description}</p>
+          <p class="details-desc">${product.description || product.shortDesc || ''}</p>
           <ul class="specs-list">
-            ${product.specs.map(s => `<li>✓ ${s}</li>`).join("")}
+            ${(product.specs || ["ضمان أصلية 100%", "شحن سريع"]).map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
 
           <div class="qty-selector">
@@ -297,7 +273,7 @@ function renderCartView() {
 
   const rows = items.map(i => `
     <div class="cart-row">
-      <img src="${i.image}" alt="${i.name}">
+      <img src="${i.image}" alt="${i.name}" onerror="this.src='assets/logo.jpg'">
       <div class="cart-row-info">
         <h4>${i.name}</h4>
         <span class="price">${i.price} ${STORE_CONFIG.currency}</span>
@@ -582,6 +558,7 @@ function renderMyOrdersView() {
     if (status === "جاري التجهيز") statusColor = "#0088ff";
     if (status === "في طريقها للتوصيل") statusColor = "#00ff66";
     if (status === "تم التسليم") statusColor = "#00ff66";
+    if (status === "ملغى") statusColor = "#ff5c5c";
 
     return `
       <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid #222;">
@@ -631,6 +608,28 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
+// ---------- النزول المباشر والسلس للأقسام بدون خربطة ----------
+function scrollToSection(sectionId) {
+  closeMobileMenu();
+  const homeView = document.getElementById("view-home");
+  
+  if (homeView && !homeView.classList.contains("active")) {
+    document.querySelectorAll(".view").forEach(v => {
+      v.classList.remove("active");
+      v.style.display = "none";
+    });
+    homeView.classList.add("active");
+    homeView.style.display = "block";
+  }
+
+  setTimeout(() => {
+    const el = document.getElementById(sectionId) || document.querySelector(`.${sectionId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 50);
+}
+
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
   renderProductGrid();
@@ -656,26 +655,3 @@ document.addEventListener("DOMContentLoaded", () => {
   const { view, params } = parseHash();
   renderView(view, params);
 });
-// دالة النزول المباشر والسلس للأقسام بدون خربطة
-function scrollToSection(sectionId) {
-  closeMobileMenu();
-  const homeView = document.getElementById("view-home");
-  
-  // التأكد من فتح الرئيسية أولاً إذا كان الزبون في صفحة ثانية
-  if (homeView && !homeView.classList.contains("active")) {
-    document.querySelectorAll(".view").forEach(v => {
-      v.classList.remove("active");
-      v.style.display = "none";
-    });
-    homeView.classList.add("active");
-    homeView.style.display = "block";
-  }
-
-  // السكرول الناعم للقسم المطلوب
-  setTimeout(() => {
-    const el = document.getElementById(sectionId);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, 50);
-}
