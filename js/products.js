@@ -1,7 +1,9 @@
 // ============================================
-// بيانات المنتجات - عدّل الاسم / الصورة / السعر / الوصف من هنا
+// بيانات المنتجات - ربط ديناميكي مع لوحة التحكم
 // ============================================
-const PRODUCTS = [
+
+// قائمة المنتجات الافتراضية الأساسية
+const DEFAULT_PRODUCTS = [
   {
     id: 1,
     name: "سماعة JBL اللاسلكية",
@@ -67,3 +69,21 @@ const PRODUCTS = [
     ]
   }
 ];
+
+// دالة جلب البيانات مع الدمج الديناميكي لتربط مع لوحة الأدمن والمتجر
+function loadStoredProducts() {
+  const saved = localStorage.getItem('wt_custom_products');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error("Error parsing stored products:", e);
+    }
+  }
+  // إذا لم تتواجد منتجات مخزنة مسبقاً، نحفظ الافتراضية
+  localStorage.setItem('wt_custom_products', JSON.stringify(DEFAULT_PRODUCTS));
+  return DEFAULT_PRODUCTS;
+}
+
+// تصدير متغير PRODUCTS الرئيسي ليقرأه المتجر والأدمن فوراً
+var PRODUCTS = loadStoredProducts();
