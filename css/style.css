@@ -368,3 +368,22 @@ body.light-store-mode .product-name {
     transform: translateY(0) scale(1);
   }
 }
+/* ضبط الهيدر وترتيب العناصر لتكون الروابط في المنتصف تماماً */
+header .container,
+.nav-container,
+.header-content {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* محاذاة قائمة الروابط في النصف */
+.nav-links {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 20px !important;
+  margin: 0 auto !important;
+  flex: 1 !important;
+}
