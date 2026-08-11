@@ -1,11 +1,9 @@
 // ============================================
-// التطبيق الرئيسي - التنقل بين الصفحات وعرض المحتوى
+// التطبيق الرئيسي - متجر WT Store الاحترافي
 // ============================================
 
-// نمط رقم الهاتف المصري: يبدأ بـ 010 أو 011 أو 012 أو 015 ثم 8 أرقام (11 رقم بالإجمالي)
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
-// قائمة محافظات مصر الـ27
 const EGYPT_GOVERNORATES = [
   "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "البحر الأحمر", "البحيرة",
   "الفيوم", "الغربية", "الإسماعيلية", "المنوفية", "المنيا", "القليوبية",
@@ -37,22 +35,30 @@ function parseHash() {
 }
 
 function renderView(view, params) {
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active");
+    v.style.opacity = 0;
+  });
+
   const target = document.getElementById(`view-${view}`);
   if (target) {
     target.classList.add("active");
+    // أنيميشن ظهور ناعم وحركي (Smooth Motion Effect)
+    setTimeout(() => {
+      target.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+      target.style.opacity = 1;
+      target.style.transform = "translateY(0)";
+    }, 10);
   } else {
-    document.getElementById("view-home").classList.add("active");
+    const homeTarget = document.getElementById("view-home");
+    if(homeTarget) homeTarget.classList.add("active");
     view = "home";
   }
 
   if (view === "product") renderProductDetails(params.id);
   if (view === "cart") renderCartView();
   if (view === "checkout") renderCheckoutView();
-  if (view === "tracking") {
-    const res = document.getElementById("trackingResult");
-    if (res) res.style.display = "none";
-  }
+  if (view === "myorders") renderMyOrdersView();
 }
 
 window.addEventListener("hashchange", () => {
@@ -60,17 +66,17 @@ window.addEventListener("hashchange", () => {
   renderView(view, params);
 });
 
-// ---------- الرئيسية: عرض المنتجات ----------
+// ---------- عرض المنتجات بالرئيسية ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
   grid.innerHTML = PRODUCTS.map(p => `
-    <div class="product-card fade-in-up">
-      <div class="product-image" onclick="navigate('product', {id: ${p.id}})">
+    <div class="product-card fade-in-up" style="transition: transform 0.3s ease;">
+      <div class="product-image" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">
         <img src="${p.image}" alt="${p.name}" loading="lazy">
       </div>
       <div class="product-body">
-        <h3 class="product-name" onclick="navigate('product', {id: ${p.id}})">${p.name}</h3>
+        <h3 class="product-name" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">${p.name}</h3>
         <p class="product-desc">${p.shortDesc}</p>
         <div class="product-price-row">
           <span class="price">${p.price} ${STORE_CONFIG.currency}</span>
@@ -88,10 +94,10 @@ function renderProductGrid() {
 function quickAddToCart(id, e) {
   e.stopPropagation();
   Cart.add(id, 1);
-  showToast("تمت إضافة المنتج إلى السلة");
+  showToast("تمت إضافة المنتج إلى السلة بنجاح 🛍️");
 }
 
-// ---------- صفحة تفاصيل المنتج (مع المشاهدات الحية والتقييمات) ----------
+// ---------- صفحة تفاصيل المنتج ----------
 function renderProductDetails(id) {
   const product = PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
   const el = document.getElementById("view-product");
@@ -100,7 +106,7 @@ function renderProductDetails(id) {
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
 
   el.innerHTML = `
-    <div class="container product-details fade-in">
+    <div class="container product-details fade-in" style="animation: fadeIn 0.4s ease;">
       <button class="back-btn" onclick="navigate('home')">← العودة للمنتجات</button>
       <div class="details-grid">
         <div class="details-image">
@@ -109,8 +115,8 @@ function renderProductDetails(id) {
         <div class="details-info">
           <h1>${product.name}</h1>
           
-          <div class="live-viewers" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 77, 77, 0.15); color: #ff4d4d; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 10px; border: 1px solid rgba(255, 77, 77, 0.3);">
-            <span style="width: 8px; height: 8px; background-color: #ff4d4d; border-radius: 50%; display: inline-block; animation: pulse-dot 1.5s infinite;"></span>
+          <div class="live-viewers" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(0, 255, 102, 0.1); color: #00ff66; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 10px; border: 1px solid rgba(0, 255, 102, 0.2);">
+            <span style="width: 8px; height: 8px; background-color: #00ff66; border-radius: 50%; display: inline-block; animation: pulse-dot 1.5s infinite;"></span>
             🔥 الآن يُشاهد هذا المنتج ${randomViewers} شخصاً
           </div>
 
@@ -130,10 +136,9 @@ function renderProductDetails(id) {
             ${product.specs.map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
 
-          <div class="customer-reviews-box" style="background: #151515; border: 1px solid #222; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <div class="customer-reviews-box" style="background: var(--panel-bg, #151515); border: 1px solid var(--border-color, #222); padding: 15px; border-radius: 8px; margin: 20px 0;">
             <h4 style="color: #fff; margin-bottom: 8px; font-size: 15px;">💬 آراء بعض العملاء:</h4>
-            <p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">"المنتج وصلني أصلي وبنفس المواصفات، جودة الصوت والخامة ممتازة جداً أنصح به." - <b>محمد أ.</b></p>
-            <p style="color: #ccc; font-size: 13px; margin: 0;">"سرعة في التوصيل وتغليف ممتاز، شكراً WT Store." - <b>محمود ع.</b></p>
+            <p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">"المنتج وصلني أصلي وبنفس المواصفات، خامة ممتازة جداً." - <b>محمد أ.</b></p>
           </div>
 
           <div class="qty-selector">
@@ -161,6 +166,10 @@ if (!document.getElementById('live-pulse-style')) {
     0% { transform: scale(0.95); opacity: 1; }
     50% { transform: scale(1.4); opacity: 0.4; }
     100% { transform: scale(0.95); opacity: 1; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   `;
   document.head.appendChild(styleTag);
@@ -190,9 +199,9 @@ function renderCartView() {
 
   if (items.length === 0) {
     el.innerHTML = `
-      <div class="container">
+      <div class="container fade-in" style="animation: fadeIn 0.4s ease;">
         <h1 class="page-title">سلة التسوق</h1>
-        <div class="empty-state fade-in">
+        <div class="empty-state">
           <div class="empty-icon">🛒</div>
           <p>السلة فارغة</p>
           <button class="btn btn-primary" onclick="navigate('home')">تصفح المنتجات</button>
@@ -219,14 +228,14 @@ function renderCartView() {
   `).join("");
 
   el.innerHTML = `
-    <div class="container">
+    <div class="container fade-in" style="animation: fadeIn 0.4s ease;">
       <h1 class="page-title">سلة التسوق</h1>
       <div class="cart-layout">
         <div class="cart-items">
           ${rows}
           <button class="btn btn-text" onclick="Cart.clear(); renderCartView();">إفراغ السلة</button>
         </div>
-        <div class="cart-summary fade-in">
+        <div class="cart-summary">
           <h3>ملخص الطلب</h3>
           <div class="summary-row"><span>المجموع الفرعي</span><span>${Cart.subtotal()} ${STORE_CONFIG.currency}</span></div>
           <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency}</span></div>
@@ -245,9 +254,9 @@ function renderCheckoutView() {
 
   if (items.length === 0) {
     el.innerHTML = `
-      <div class="container">
+      <div class="container fade-in">
         <h1 class="page-title">إتمام الطلب</h1>
-        <div class="empty-state fade-in">
+        <div class="empty-state">
           <div class="empty-icon">🛒</div>
           <p>السلة فارغة، أضف منتجات أولاً</p>
           <button class="btn btn-primary" onclick="navigate('home')">تصفح المنتجات</button>
@@ -264,10 +273,10 @@ function renderCheckoutView() {
   `).join("");
 
   el.innerHTML = `
-    <div class="container">
+    <div class="container fade-in" style="animation: fadeIn 0.4s ease;">
       <h1 class="page-title">إتمام الطلب</h1>
       <div class="checkout-layout">
-        <form id="checkoutForm" class="checkout-form fade-in">
+        <form id="checkoutForm" class="checkout-form">
           <div class="form-group">
             <label>الاسم الكامل</label>
             <input type="text" id="fName" placeholder="مثال: أحمد محمد">
@@ -309,7 +318,7 @@ function renderCheckoutView() {
           </div>
           <button type="button" id="confirmOrderBtn" class="btn btn-primary btn-lg full">تأكيد الطلب</button>
         </form>
-        <div class="cart-summary fade-in">
+        <div class="cart-summary">
           <h3>ملخص الطلب</h3>
           ${rows}
           <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency}</span></div>
@@ -364,7 +373,7 @@ async function executeOrderSubmission(e) {
   ["fPhone", "fWhatsapp"].forEach(id => {
     const errEl = document.getElementById(`err-${id}`);
     if (values[id] && !EGY_PHONE_REGEX.test(values[id])) {
-      if (errEl) errEl.textContent = "يرجى إدخال رقم مصري صحيح مكوّن من 11 رقم (يبدأ بـ 010 أو 011 أو 012 أو 015)";
+      if (errEl) errEl.textContent = "يرجى إدخال رقم مصري صحيح (11 رقم يبدأ بـ 01)";
       valid = false;
     }
   });
@@ -445,7 +454,7 @@ function renderSuccessView(order) {
     return;
   }
   el.innerHTML = `
-    <div class="container success-view fade-in">
+    <div class="container success-view fade-in" style="animation: fadeIn 0.4s ease;">
       <div class="success-icon">🎉</div>
       <h1>تم استلام طلبك بنجاح</h1>
       <div class="success-card">
@@ -455,63 +464,59 @@ function renderSuccessView(order) {
         <div class="summary-row"><span>الحالة</span><span class="status-badge">بانتظار التأكيد</span></div>
       </div>
       <div class="success-actions">
-        <button class="btn btn-primary btn-lg" onclick="navigate('tracking')">تتبع الطلب</button>
+        <button class="btn btn-primary btn-lg" onclick="navigate('myorders')">عرض طلباتي</button>
         <button class="btn btn-text" onclick="navigate('home')">العودة للرئيسية</button>
       </div>
     </div>`;
 }
 
-// ---------- تتبع الطلب ----------
-function submitTracking(e) {
-  e.preventDefault();
-  const orderNumber = document.getElementById("trackOrderNumber").value.trim();
-  const phone = document.getElementById("trackPhone").value.trim();
-  
-  if (!orderNumber || !phone) {
-    showToast("يرجى إدخال رقم الطلب ورقم الهاتف");
-    return;
-  }
+// ---------- قسم "طلباتي" الجديد (بدل تتبع الطلب) ----------
+function renderMyOrdersView() {
+  const el = document.getElementById("view-myorders");
+  if (!el) return;
 
   const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
-  const order = savedOrders.find(o => o.orderNumber === orderNumber && o.phone === phone);
-
-  const resultEl = document.getElementById("trackingResult");
-  if (!resultEl) return;
-  resultEl.style.display = "block";
-
-  if (!order) {
-    resultEl.innerHTML = `
-      <div class="success-card fade-in" style="margin-top: 20px; text-align: center; border: 1px solid #ff4d4d;">
-        <p style="color: #ff4d4d;">عذراً، لم يتم العثور على طلب بهذا الرقم أو بيانات الهاتف غير صحيحة.</p>
+  
+  if (savedOrders.length === 0) {
+    el.innerHTML = `
+      <div class="container fade-in" style="animation: fadeIn 0.4s ease; text-align: center; padding: 40px 0;">
+        <h1 class="page-title">📦 طلباتي السابقة</h1>
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>لا توجد أي طلبات مسجلة من هذا المتصفح حتى الآن.</p>
+          <button class="btn btn-primary" onclick="navigate('home')" style="margin-top: 15px;">تسوق الان</button>
+        </div>
       </div>
     `;
     return;
   }
 
-  const status = order.status || "بانتظار التأكيد";
-  let s1 = "color: #00ff66;", s2 = "color: #888;", s3 = "color: #888;", s4 = "color: #888;";
+  let ordersHtml = savedOrders.reverse().map(order => {
+    const status = order.status || "بانتظار التأكيد";
+    let statusColor = "#ffaa00";
+    if (status === "جاري التجهيز") statusColor = "#0088ff";
+    if (status === "في طريقها للتوصيل") statusColor = "#00ff66";
+    if (status === "تم التسليم") statusColor = "#00ff66";
 
-  if (status === "جاري التجهيز") {
-    s1 = "color: #00ff66;"; s2 = "color: #00ff66;";
-  } else if (status === "في طريقها للتوصيل") {
-    s1 = "color: #00ff66;"; s2 = "color: #00ff66;"; s3 = "color: #00ff66;";
-  } else if (status === "تم التسليم") {
-    s1 = "color: #00ff66;"; s2 = "color: #00ff66;"; s3 = "color: #00ff66;"; s4 = "color: #00ff66;";
-  }
-
-  resultEl.innerHTML = `
-    <div class="success-card fade-in" style="margin-top: 20px;">
-      <h3>تفاصيل تتبع الطلب: ${order.orderNumber}</h3>
-      <div class="summary-row"><span>الاسم:</span><span>${order.name}</span></div>
-      <div class="summary-row"><span>الإجمالي:</span><span>${order.total} ${STORE_CONFIG.currency}</span></div>
-      <div class="summary-row"><span>الحالة الحالية:</span><span style="color: #00ff66; font-weight: bold;">${status}</span></div>
-      
-      <div class="tracking-steps" style="margin-top: 20px; text-align: right; line-height: 2;">
-        <div style="${s1}">✔ <b>تم استلام الطلب</b> (جاري المراجعة والتأكيد)</div>
-        <div style="${s2}">⏳ <b>جاري التجهيز</b> (المنتج يتم فحزه وتغليفه بعناية)</div>
-        <div style="${s3}">📦 <b>في طريقها للتوصيل</b> (مع مندوب الشحن قريباً)</div>
-        <div style="${s4}">🎉 <b>تم التسليم</b></div>
+    return `
+      <div class="success-card fade-in" style="margin-bottom: 20px; text-align: right; border: 1px solid var(--border-color, #222); animation: fadeIn 0.3s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #222); padding-bottom: 10px; margin-bottom: 10px;">
+          <h3 style="margin: 0; color: #fff;">رقم الطلب: ${order.orderNumber}</h3>
+          <span style="background: rgba(0,255,102,0.1); color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">${status}</span>
+        </div>
+        <div class="summary-row"><span>اسم العميل:</span><span>${order.name}</span></div>
+        <div class="summary-row"><span>الهاتف:</span><span>${order.phone}</span></div>
+        <div class="summary-row"><span>العنوان:</span><span>${order.province} - ${order.city} - ${order.address}</span></div>
+        <div class="summary-row"><span>الإجمالي:</span><span style="color: #00ff66; font-weight: bold;">${order.total} ${STORE_CONFIG.currency}</span></div>
+        <div style="margin-top: 10px; font-size: 13px; color: var(--text-muted, #888);">تاريخ الطلب: ${order.date}</div>
       </div>
+    `;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="container fade-in" style="animation: fadeIn 0.4s ease; max-width: 800px; margin: 0 auto; padding: 20px;">
+      <h1 class="page-title" style="text-align: center; margin-bottom: 30px;">📦 طلباتي السابقة</h1>
+      ${ordersHtml}
     </div>
   `;
 }
@@ -527,7 +532,7 @@ function showToast(message) {
   toastTimeout = setTimeout(() => toast.classList.remove("show"), 2800);
 }
 
-// ---------- القائمة على الجوال ----------
+// ---------- القائمة الجوال ----------
 function toggleMobileMenu() {
   const menu = document.getElementById("mobileMenu");
   const hamburger = document.getElementById("hamburger");
@@ -541,18 +546,18 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
-// ---------- وضع الليل والنهار للمتجر الرئيسي ----------
+// ---------- الثيم (الوضع الليلي والنهاري) ----------
 function toggleStoreTheme() {
   const body = document.body;
   const btn = document.getElementById('storeThemeBtn');
   
   if (body.classList.contains('light-store-mode')) {
     body.classList.remove('light-store-mode');
-    if(btn) btn.textContent = '🌙 الوضع الليلي';
+    if(btn) btn.textContent = '🌙';
     localStorage.setItem('wt_store_theme', 'dark');
   } else {
     body.classList.add('light-store-mode');
-    if(btn) btn.textContent = '☀️ الوضع النهاري';
+    if(btn) btn.textContent = '☀️';
     localStorage.setItem('wt_store_theme', 'light');
   }
 }
@@ -574,12 +579,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (ig) ig.href = STORE_CONFIG.instagramUrl;
   if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
 
-  // استرجاع وضع الثيم المحفوظ
   const savedTheme = localStorage.getItem('wt_store_theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light-store-mode');
     const btn = document.getElementById('storeThemeBtn');
-    if(btn) btn.textContent = '☀️ الوضع النهاري';
+    if(btn) btn.textContent = '☀️';
   }
 
   const { view, params } = parseHash();
