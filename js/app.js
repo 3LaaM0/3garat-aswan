@@ -38,7 +38,8 @@ function renderView(view, params) {
   if (view === "cart") renderCartView();
   if (view === "checkout") renderCheckoutView();
   if (view === "tracking") {
-    document.getElementById("trackingResult").style.display = "none";
+    const res = document.getElementById("trackingResult");
+    if (res) res.style.display = "none";
   }
 }
 
@@ -50,6 +51,7 @@ window.addEventListener("hashchange", () => {
 // ---------- الرئيسية: عرض المنتجات ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
+  if (!grid) return;
   grid.innerHTML = PRODUCTS.map(p => `
     <div class="product-card fade-in-up">
       <div class="product-image" onclick="navigate('product', {id: ${p.id}})">
@@ -81,6 +83,7 @@ function quickAddToCart(id, e) {
 function renderProductDetails(id) {
   const product = PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
   const el = document.getElementById("view-product");
+  if (!el) return;
   el.innerHTML = `
     <div class="container product-details fade-in">
       <button class="back-btn" onclick="navigate('home')">→ العودة للمنتجات</button>
@@ -117,7 +120,8 @@ function renderProductDetails(id) {
 
 function changeDetailQty(delta) {
   window._detailQty = Math.max(1, (window._detailQty || 1) + delta);
-  document.getElementById("detailQty").textContent = window._detailQty;
+  const qtyEl = document.getElementById("detailQty");
+  if (qtyEl) qtyEl.textContent = window._detailQty;
 }
 
 function addDetailToCart(id) {
@@ -133,6 +137,7 @@ function buyNow(id) {
 // ---------- السلة ----------
 function renderCartView() {
   const el = document.getElementById("view-cart");
+  if (!el) return;
   const items = Cart.detailedItems();
 
   if (items.length === 0) {
@@ -187,6 +192,7 @@ function renderCartView() {
 // ---------- الدفع ----------
 function renderCheckoutView() {
   const el = document.getElementById("view-checkout");
+  if (!el) return;
   const items = Cart.detailedItems();
 
   if (items.length === 0) {
@@ -213,7 +219,6 @@ function renderCheckoutView() {
     <div class="container">
       <h1 class="page-title">إتمام الطلب</h1>
       <div class="checkout-layout">
-        <!-- تم إزالة الـ onsubmit العشوائي وتأمين الفورم -->
         <form id="checkoutForm" class="checkout-form fade-in">
           <div class="form-group">
             <label>الاسم الكامل</label>
@@ -261,7 +266,6 @@ function renderCheckoutView() {
       </div>
     </div>`;
 
-  // ربط زر تأكيد الطلب برمجياً حصرياً داخل صفحة الدفع
   setTimeout(() => {
     const btn = document.getElementById("confirmOrderBtn");
     if (btn) {
@@ -318,6 +322,11 @@ async function executeOrderSubmission(e) {
     status: "بانتظار التأكيد"
   };
 
+  // حفظ الطلب محلياً ليعمل التتبع بنجاح
+  let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+  savedOrders.push(order);
+  localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
+
   // إرسال البيانات مباشرة إلى تليجرام
   const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
   const chatId = '5535861156';
@@ -354,15 +363,6 @@ ${itemsText}
     console.error('خطأ في إرسال تليجرام:', error);
   }
 
-  try {
-    if (typeof Orders !== 'undefined' && Orders.save) {
-      Orders.save(order);
-      if (Orders.sendToAutomation) Orders.sendToAutomation(order);
-    }
-  } catch (err) {
-    console.log(err);
-  }
-
   Cart.clear();
   window._lastOrder = order;
   navigate("success");
@@ -373,6 +373,7 @@ ${itemsText}
 function renderSuccessView(order) {
   order = order || window._lastOrder;
   const el = document.getElementById("view-success");
+  if (!el) return;
   if (!order) {
     el.innerHTML = `<div class="container"><p>لا يوجد طلب حديث لعرضه.</p></div>`;
     return;
@@ -394,23 +395,54 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- تتبع الطلب ----------
+// ---------- تتبع الطلب (بالحالات التلقائية) ----------
 function submitTracking(e) {
   e.preventDefault();
   const orderNumber = document.getElementById("trackOrderNumber").value.trim();
   const phone = document.getElementById("trackPhone").value.trim();
+  
   if (!orderNumber || !phone) {
     showToast("يرجى إدخال رقم الطلب ورقم الهاتف");
     return;
   }
-  const order = Orders.findByNumberAndPhone(orderNumber, phone);
-  renderTrackingResult(order);
+
+  const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+  const order = savedOrders.find(o => o.orderNumber === orderNumber && o.phone === phone);
+
+  const resultEl = document.getElementById("trackingResult");
+  if (!resultEl) return;
+  resultEl.style.display = "block";
+
+  if (!order) {
+    resultEl.innerHTML = `
+      <div class="success-card fade-in" style="margin-top: 20px; text-align: center; border: 1px solid #ff4d4d;">
+        <p style="color: #ff4d4d;">عذراً، لم يتم العثور على طلب بهذا الرقم أو بيانات الهاتف غير صحيحة.</p>
+      </div>
+    `;
+    return;
+  }
+
+  resultEl.innerHTML = `
+    <div class="success-card fade-in" style="margin-top: 20px;">
+      <h3>تفاصيل تتبع الطلب: ${order.orderNumber}</h3>
+      <div class="summary-row"><span>الاسم:</span><span>${order.name}</span></div>
+      <div class="summary-row"><span>الإجمالي:</span><span>${order.total} ${STORE_CONFIG.currency}</span></div>
+      
+      <div class="tracking-steps" style="margin-top: 20px; text-align: right; line-height: 2;">
+        <div style="color: #00ff66;">✔ <b>تم استلام الطلب</b> (جاري المراجعة والتأكيد)</div>
+        <div style="color: #00ff66;">⏳ <b>جاري التجهيز</b> (المنتج يتم فحزه وتغليفه بعناية)</div>
+        <div style="color: #888;">📦 <b>في طريقها للتوصيل</b> (مع مندوب الشحن قريباً)</div>
+        <div style="color: #888;">🎉 <b>تم التسليم</b></div>
+      </div>
+    </div>
+  `;
 }
 
 // ---------- Toast ----------
 let toastTimeout;
 function showToast(message) {
   const toast = document.getElementById("toast");
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.add("show");
   clearTimeout(toastTimeout);
@@ -419,25 +451,35 @@ function showToast(message) {
 
 // ---------- القائمة على الجوال ----------
 function toggleMobileMenu() {
-  document.getElementById("mobileMenu").classList.toggle("open");
-  document.getElementById("hamburger").classList.toggle("open");
+  const menu = document.getElementById("mobileMenu");
+  const hamburger = document.getElementById("hamburger");
+  if (menu) menu.classList.toggle("open");
+  if (hamburger) hamburger.classList.toggle("open");
 }
 function closeMobileMenu() {
-  document.getElementById("mobileMenu").classList.remove("open");
-  document.getElementById("hamburger").classList.remove("open");
+  const menu = document.getElementById("mobileMenu");
+  const hamburger = document.getElementById("hamburger");
+  if (menu) menu.classList.remove("open");
+  if (hamburger) hamburger.classList.remove("open");
 }
 
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
   renderProductGrid();
   Cart.updateCounter();
-  document.getElementById("year").textContent = new Date().getFullYear();
+  const yearEl = document.getElementById("year");
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   // ربط روابط التواصل الاجتماعي
-  document.getElementById("footerFb").href = STORE_CONFIG.facebookUrl;
-  document.getElementById("footerWa").href = STORE_CONFIG.whatsappUrl;
-  document.getElementById("footerIg").href = STORE_CONFIG.instagramUrl;
-  document.getElementById("footerWa2").href = STORE_CONFIG.whatsappUrl;
+  const fb = document.getElementById("footerFb");
+  const wa = document.getElementById("footerWa");
+  const ig = document.getElementById("footerIg");
+  const wa2 = document.getElementById("footerWa2");
+
+  if (fb) fb.href = STORE_CONFIG.facebookUrl;
+  if (wa) wa.href = STORE_CONFIG.whatsappUrl;
+  if (ig) ig.href = STORE_CONFIG.instagramUrl;
+  if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
 
   const { view, params } = parseHash();
   renderView(view, params);
