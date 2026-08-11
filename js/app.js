@@ -461,7 +461,7 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- تتبع الطلب (محدث ليتفاعل مع الحالات الحقيقية) ----------
+// ---------- تتبع الطلب (محدث ومضمون للحالات) ----------
 function submitTracking(e) {
   e.preventDefault();
   const orderNumber = document.getElementById("trackOrderNumber").value.trim();
@@ -488,25 +488,37 @@ function submitTracking(e) {
     return;
   }
 
-  const currentStatus = order.status || "بانتظار التأكيد";
-  
-  const step1 = "color: #00ff66;";
-  const step2 = (currentStatus === "جاري التجهيز" || currentStatus === "في طريقها للتوصيل" || currentStatus === "تم التسليم") ? "color: #00ff66;" : "color: #888;";
-  const step3 = (currentStatus === "في طريقها للتوصيل" || currentStatus === "تم التسليم") ? "color: #00ff66;" : "color: #888;";
-  const step4 = (currentStatus === "تم التسليم") ? "color: #00ff66;" : "color: #888;";
+  const status = order.status || "بانتظار التأكيد";
+
+  // الألوان بناءً على حالة الطلب الحقيقية
+  let s1 = "color: #00ff66;", s2 = "color: #888;", s3 = "color: #888;", s4 = "color: #888;";
+
+  if (status === "جاري التجهيز") {
+    s1 = "color: #00ff66;";
+    s2 = "color: #00ff66;";
+  } else if (status === "في طريقها للتوصيل") {
+    s1 = "color: #00ff66;";
+    s2 = "color: #00ff66;";
+    s3 = "color: #00ff66;";
+  } else if (status === "تم التسليم") {
+    s1 = "color: #00ff66;";
+    s2 = "color: #00ff66;";
+    s3 = "color: #00ff66;";
+    s4 = "color: #00ff66;";
+  }
 
   resultEl.innerHTML = `
     <div class="success-card fade-in" style="margin-top: 20px;">
       <h3>تفاصيل تتبع الطلب: ${order.orderNumber}</h3>
       <div class="summary-row"><span>الاسم:</span><span>${order.name}</span></div>
       <div class="summary-row"><span>الإجمالي:</span><span>${order.total} ${STORE_CONFIG.currency}</span></div>
-      <div class="summary-row"><span>الحالة الحالية:</span><span style="color: #00ff66; font-weight: bold;">${currentStatus}</span></div>
+      <div class="summary-row"><span>الحالة الحالية:</span><span style="color: #00ff66; font-weight: bold;">${status}</span></div>
       
       <div class="tracking-steps" style="margin-top: 20px; text-align: right; line-height: 2;">
-        <div style="${step1}">✔ <b>تم استلام الطلب</b> (جاري المراجعة والتأكيد)</div>
-        <div style="${step2}">⏳ <b>جاري التجهيز</b> (المنتج يتم فحزه وتغليفه بعناية)</div>
-        <div style="${step3}">📦 <b>في طريقها للتوصيل</b> (مع مندوب الشحن قريباً)</div>
-        <div style="${step4}">🎉 <b>تم التسليم</b></div>
+        <div style="${s1}">✔ <b>تم استلام الطلب</b> (جاري المراجعة والتأكيد)</div>
+        <div style="${s2}">⏳ <b>جاري التجهيز</b> (المنتج يتم فحزه وتغليفه بعناية)</div>
+        <div style="${s3}">📦 <b>في طريقها للتوصيل</b> (مع مندوب الشحن قريباً)</div>
+        <div style="${s4}">🎉 <b>تم التسليم</b></div>
       </div>
     </div>
   `;
