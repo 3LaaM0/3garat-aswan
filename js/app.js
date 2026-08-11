@@ -342,7 +342,6 @@ ${itemsText}
     console.error('خطأ في إرسال تليجرام:', error);
   }
 
-  // تخطي أي كائن Orders قديم لمنع الأخطاء وحفظ الطلب محلياً
   try {
     if (typeof Orders !== 'undefined' && Orders.save) {
       Orders.save(order);
@@ -381,7 +380,6 @@ function renderSuccessView(order) {
         <button class="btn btn-text" onclick="navigate('home')">العودة للرئيسية</button>
       </div>
     </div>`;
-}
 }
 
 // ---------- تتبع الطلب ----------
