@@ -1,89 +1,29 @@
 // ============================================
-// بيانات المنتجات - ربط ديناميكي مع لوحة التحكم
+// إدارة المنتجات الديناميكية بين الأدمن والمتجر
 // ============================================
 
-// قائمة المنتجات الافتراضية الأساسية
-const DEFAULT_PRODUCTS = [
-  {
-    id: 1,
-    name: "سماعة JBL اللاسلكية",
-    image: "assets/products/headphone.svg",
-    price: 1450,
-    oldPrice: 1750,
-    shortDesc: "صوت نقي وباس قوي مع عزل ضوضاء وبطارية تدوم طويلاً",
-    description: "سماعة رأس لاسلكية بتقنية بلوتوث 5.3، تصميم مريح للاستخدام الطويل، وجودة صوت JBL المعروفة بالباس القوي والوضوح العالي.",
-    specs: [
-      "بلوتوث 5.3",
-      "عمر بطارية حتى 40 ساعة",
-      "عزل ضوضاء نشط (ANC)",
-      "شحن سريع: 10 دقائق = 5 ساعات تشغيل",
-      "ميكروفون مدمج للمكالمات"
-    ]
-  },
-  {
-    id: 2,
-    name: "ساعة ذكية رياضية",
-    image: "assets/products/watch.svg",
-    price: 990,
-    oldPrice: 1250,
-    shortDesc: "تتبع اللياقة والصحة مع شاشة AMOLED نابضة بالحياة",
-    description: "ساعة ذكية بشاشة AMOLED عالية الدقة، تدعم قياس معدل ضربات القلب والأكسجين والنوم، ومقاومة للماء، مثالية للاستخدام اليومي والرياضة.",
-    specs: [
-      "شاشة AMOLED 1.8 بوصة",
-      "مقاومة للماء IP68",
-      "قياس معدل ضربات القلب والأكسجين",
-      "أكثر من 100 وضع رياضي",
-      "بطارية تدوم حتى 7 أيام"
-    ]
-  },
-  {
-    id: 3,
-    name: "سماعات أذن لاسلكية",
-    image: "assets/products/earbuds.svg",
-    price: 650,
-    oldPrice: 850,
-    shortDesc: "خفيفة ومريحة مع علبة شحن أنيقة وصوت متوازن",
-    description: "سماعات أذن لاسلكية صغيرة الحجم مع علبة شحن محمولة، مقاومة للعرق والماء، ومناسبة للرياضة والاستخدام اليومي.",
-    specs: [
-      "بلوتوث 5.2",
-      "مقاومة للعرق والماء IPX5",
-      "علبة شحن توفر 24 ساعة إضافية",
-      "تحكم باللمس",
-      "اتصال تلقائي فوري"
-    ]
-  },
-  {
-    id: 4,
-    name: "مكبر صوت بلوتوث محمول",
-    image: "assets/products/speaker.svg",
-    price: 780,
-    oldPrice: 980,
-    shortDesc: "صوت قوي 360 درجة مناسب للرحلات والتجمعات",
-    description: "مكبر صوت محمول بقوة صوت عالية وباس عميق، تصميم مقاوم للماء يناسب الرحلات والحفلات الخارجية، مع بطارية طويلة العمر.",
-    specs: [
-      "بلوتوث 5.0",
-      "مقاومة للماء IPX6",
-      "صوت محيطي 360 درجة",
-      "بطارية تدوم حتى 12 ساعة",
-      "إمكانية ربط سماعتين معاً"
-    ]
-  }
-];
-
-// دالة جلب البيانات مع الدمج الديناميكي لتربط مع لوحة الأدمن والمتجر
-function loadStoredProducts() {
+// دالة جلب المنتجات المخزنة (أو الافتراضية لو أول مرة يفتح)
+function getStoreProducts() {
   const saved = localStorage.getItem('wt_custom_products');
   if (saved) {
     try {
       return JSON.parse(saved);
     } catch (e) {
-      console.error("Error parsing stored products:", e);
+      console.error(e);
     }
   }
-  // إذا لم تتواجد منتجات مخزنة مسبقاً، نحفظ الافتراضية
-  localStorage.setItem('wt_custom_products', JSON.stringify(DEFAULT_PRODUCTS));
-  return DEFAULT_PRODUCTS;
+  
+  // المنتجات الافتراضية لأول مرة فقط
+  const initialProducts = [
+    { id: 1, name: "سماعة JBL اللاسلكية", price: 1450, oldPrice: 1750, image: "assets/products/headphone.svg", shortDesc: "صوت نقي وباس قوي مع عزل ضوضاء", description: "سماعة رأس لاسلكية بتقنية بلوتوث 5.3.", specs: ["بلوتوث 5.3", "بطارية 40 ساعة"] },
+    { id: 2, name: "ساعة ذكية رياضية", price: 990, oldPrice: 1250, image: "assets/products/watch.svg", shortDesc: "تتبع اللياقة والصحة بشاشة AMOLED", description: "ساعة ذكية مقاومة للماء.", specs: ["شاشة AMOLED", "IP68"] },
+    { id: 3, name: "سماعات أذن لاسلكية", price: 650, oldPrice: 850, image: "assets/products/earbuds.svg", shortDesc: "خفيفة ومريحة مع علبة شحن", description: "سماعات أذن لاسلكية صغيرة الحجم.", specs: ["بلوتوث 5.2", "تحكم باللمس"] },
+    { id: 4, name: "مكبر صوت بلوتوث محمول", price: 780, oldPrice: 980, image: "assets/products/speaker.svg", shortDesc: "صوت قوي 360 درجة مناسب للرحلات", description: "مكبر صوت محمول مقاوم للماء.", specs: ["بلوتوث 5.0", "صوت 360 درجة"] }
+  ];
+
+  localStorage.setItem('wt_custom_products', JSON.stringify(initialProducts));
+  return initialProducts;
 }
 
-// تصدير متغير PRODUCTS الرئيسي ليقرأه المتجر والأدمن فوراً
-var PRODUCTS = loadStoredProducts();
+// تعريف المتغير ليقرأ دائماً من الـ Storage
+var PRODUCTS = getStoreProducts();
