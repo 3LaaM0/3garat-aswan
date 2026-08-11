@@ -322,3 +322,22 @@ textarea { resize: vertical; }
   .footer-grid { grid-template-columns: 1fr; }
   .hero { padding: 60px 0 50px; }
 }
+/* تأثير الوضع النهاري للمتجر الرئيسي */
+body.light-store-mode {
+  background-color: #f4f6f9 !important;
+  color: #222 !important;
+}
+body.light-store-mode .product-card,
+body.light-store-mode .success-card,
+body.light-store-mode .cart-summary {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #333 !important;
+}
+body.light-store-mode h1, 
+body.light-store-mode h2, 
+body.light-store-mode h3, 
+body.light-store-mode h4, 
+body.light-store-mode .product-name {
+  color: #111 !important;
+}
