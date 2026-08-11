@@ -79,28 +79,55 @@ function quickAddToCart(id, e) {
   showToast("تمت إضافة المنتج إلى السلة");
 }
 
-// ---------- صفحة تفاصيل المنتج ----------
+// ---------- صفحة تفاصيل المنتج (مع المشاهدات الحية والتقييمات) ----------
 function renderProductDetails(id) {
   const product = PRODUCTS.find(p => p.id === id) || PRODUCTS[0];
   const el = document.getElementById("view-product");
   if (!el) return;
+
+  // توليد عدد عشوائي كبير ومفتوح للمشاهدين بين 45 و 125 شخص
+  const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
+
   el.innerHTML = `
     <div class="container product-details fade-in">
-      <button class="back-btn" onclick="navigate('home')">→ العودة للمنتجات</button>
+      <button class="back-btn" onclick="navigate('home')">← العودة للمنتجات</button>
       <div class="details-grid">
         <div class="details-image">
           <img src="${product.image}" alt="${product.name}">
         </div>
         <div class="details-info">
           <h1>${product.name}</h1>
+          
+          <!-- عداد المشاهدين الحي -->
+          <div class="live-viewers" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 77, 77, 0.15); color: #ff4d4d; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 10px; border: 1px solid rgba(255, 77, 77, 0.3);">
+            <span style="width: 8px; height: 8px; background-color: #ff4d4d; border-radius: 50%; display: inline-block; animation: pulse-dot 1.5s infinite;"></span>
+            🔥 الآن يُشاهد هذا المنتج ${randomViewers} شخصاً
+          </div>
+
           <div class="product-price-row large">
             <span class="price">${product.price} ${STORE_CONFIG.currency}</span>
             <span class="old-price">${product.oldPrice} ${STORE_CONFIG.currency}</span>
           </div>
+          
+          <!-- قسم النجوم والتقييم -->
+          <div class="product-rating" style="display: flex; align-items: center; gap: 8px; margin: 10px 0; color: #ffaa00; font-size: 14px;">
+            <span>⭐⭐⭐⭐⭐</span>
+            <strong style="color: #fff;">4.9 / 5</strong>
+            <span style="color: #888;">(142 تقييم عميل)</span>
+          </div>
+
           <p class="details-desc">${product.description}</p>
           <ul class="specs-list">
             ${product.specs.map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
+
+          <!-- آراء العملاء المصغرة -->
+          <div class="customer-reviews-box" style="background: #151515; border: 1px solid #222; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #fff; margin-bottom: 8px; font-size: 15px;">💬 آراء بعض العملاء:</h4>
+            <p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">"المنتج وصلني أصلي وبنفس المواصفات، جودة الصوت والخامة ممتازة جداً أنصح به." - <b>محمد أ.</b></p>
+            <p style="color: #ccc; font-size: 13px; margin: 0;">"سرعة في التوصيل وتغليف ممتاز، شكراً WT Store." - <b>محمود ع.</b></p>
+          </div>
+
           <div class="qty-selector">
             <span>الكمية:</span>
             <button onclick="changeDetailQty(-1)">−</button>
@@ -116,6 +143,20 @@ function renderProductDetails(id) {
     </div>
   `;
   window._detailQty = 1;
+}
+
+// إضافة تأثير النبض البسيط للنقطة الحمراء
+if (!document.getElementById('live-pulse-style')) {
+  const styleTag = document.createElement('style');
+  styleTag.id = 'live-pulse-style';
+  styleTag.innerHTML = `
+  @keyframes pulse-dot {
+    0% { transform: scale(0.95); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.4; }
+    100% { transform: scale(0.95); opacity: 1; }
+  }
+  `;
+  document.head.appendChild(styleTag);
 }
 
 function changeDetailQty(delta) {
@@ -322,12 +363,10 @@ async function executeOrderSubmission(e) {
     status: "بانتظار التأكيد"
   };
 
-  // حفظ الطلب محلياً ليعمل التتبع بنجاح
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
   savedOrders.push(order);
   localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
 
-  // إرسال البيانات مباشرة إلى تليجرام
   const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
   const chatId = '5535861156';
 
@@ -395,7 +434,7 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- تتبع الطلب (بالحالات التلقائية) ----------
+// ---------- تتبع الطلب ----------
 function submitTracking(e) {
   e.preventDefault();
   const orderNumber = document.getElementById("trackOrderNumber").value.trim();
@@ -470,7 +509,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // ربط روابط التواصل الاجتماعي
   const fb = document.getElementById("footerFb");
   const wa = document.getElementById("footerWa");
   const ig = document.getElementById("footerIg");
