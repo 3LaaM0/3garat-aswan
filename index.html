@@ -21,18 +21,19 @@
       <span class="logo-text">WT <span>Store</span></span>
     </div>
 
+    <!-- إضافة الإيموشنز لجميع الأقسام وتعديل الحركة -->
     <ul class="nav-links">
-      <li><a href="#home" onclick="navigate('home')">الرئيسية</a></li>
-      <li><a href="#productsGrid" onclick="document.getElementById('productsGrid')?.scrollIntoView({behavior: 'smooth'})">المنتجات</a></li>
-      <li><a href="#aboutSection" onclick="document.getElementById('aboutSection')?.scrollIntoView({behavior: 'smooth'})">من نحن</a></li>
-      <li><a href="#myorders" onclick="navigate('myorders')">طلباتي</a></li>
+      <li><a href="#home" onclick="navigate('home')">🏠 الرئيسية</a></li>
+      <li><a href="#productsSection" onclick="scrollToSection('productsSection')">🛍️ المنتجات</a></li>
+      <li><a href="#aboutSection" onclick="scrollToSection('aboutSection')">ℹ️ من نحن</a></li>
+      <li><a href="#myorders" onclick="navigate('myorders')">📦 طلباتي</a></li>
     </ul>
 
     <div class="header-actions">
       <a class="cart-btn" onclick="navigate('cart')">
         🛒<span class="cart-count" id="cartCount">0</span>
       </a>
-      <button class="btn btn-primary" onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),80)">تسوق الآن</button>
+      <button class="btn btn-primary" onclick="scrollToSection('productsSection')">تسوق الآن</button>
       <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
         <span></span><span></span><span></span>
       </div>
@@ -40,15 +41,15 @@
   </div>
 </header>
 
-<!-- ===== Mobile Menu ===== -->
+<!-- ===== Mobile Menu (مع الإيموشنز) ===== -->
 <div class="mobile-menu" id="mobileMenu">
-  <a onclick="navigate('home')">الرئيسية</a>
-  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),80)">المنتجات</a>
-  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection')?.scrollIntoView({behavior:'smooth'}),80)">من نحن</a>
-  <a onclick="navigate('myorders')">طلباتي</a>
-  <a onclick="navigate('cart')">سلة التسوق 🛒</a>
+  <a onclick="navigate('home')">🏠 الرئيسية</a>
+  <a onclick="scrollToSection('productsSection')">🛍️ المنتجات</a>
+  <a onclick="scrollToSection('aboutSection')">ℹ️ من نحن</a>
+  <a onclick="navigate('myorders')">📦 طلباتي</a>
+  <a onclick="navigate('cart')">🛒 سلة التسوق</a>
 </div>
-
+  
 <main>
 
   <!-- ===== الرئيسية ===== -->
