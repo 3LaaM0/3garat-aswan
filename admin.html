@@ -287,14 +287,14 @@
     }
 
     // حذف منتج وتحديث الـ LocalStorage فوراً
-    function deleteProduct(idx) {
-      if (confirm("هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر؟")) {
-        let products = getProductsList();
-        products.splice(idx, 1);
-        localStorage.setItem('wt_custom_products', JSON.stringify(products));
-        initAdminPage();
-      }
-    }
+  function deleteProduct(idx) {
+  if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+    let products = getStoreProducts();
+    products.splice(idx, 1);
+    localStorage.setItem('wt_custom_products', JSON.stringify(products));
+    initDashboard(); // إعادة رسم جدول الأدمن
+  }
+}
 
     function openAddModal() {
       document.getElementById('addProductModal').classList.add('active');
