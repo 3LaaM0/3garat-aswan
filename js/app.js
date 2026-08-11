@@ -263,6 +263,12 @@ function renderCheckoutView() {
 
 async function submitOrder(e) {
   e.preventDefault();
+
+  // منع أي تشغيل بالغلط من الأزرار الخارجية (مثل تسوق الآن)
+  const nameInput = document.getElementById("fName");
+  const phoneInput = document.getElementById("fPhone");
+  if (!nameInput || !phoneInput) return;
+
   const fields = {
     fName: "يرجى إدخال الاسم",
     fPhone: "يرجى إدخال رقم الهاتف",
