@@ -163,21 +163,31 @@ window.addEventListener("hashchange", () => {
   renderView(view, params);
 });
 
-// ---------- عرض المنتجات بالرئيسية ----------
+// ---------- عرض المنتجات بالرئيسية من الـ LocalStorage الموحد ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
-  if (!grid || typeof PRODUCTS === "undefined") return;
-  grid.innerHTML = PRODUCTS.map(p => `
+  if (!grid) return;
+
+  // جلب المنتجات المحدثة من الأدمن
+  const stored = localStorage.getItem('wt_custom_products');
+  const productsList = stored ? JSON.parse(stored) : (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []);
+
+  if (productsList.length === 0) {
+    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 40px 0;">لا توجد منتجات معروضة حالياً.</p>`;
+    return;
+  }
+
+  grid.innerHTML = productsList.map(p => `
     <div class="product-card fade-in-up">
       <div class="product-image" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">
-        <img src="${p.image}" alt="${p.name}" loading="lazy">
+        <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='assets/logo.jpg'">
       </div>
       <div class="product-body">
         <h3 class="product-name" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">${p.name}</h3>
-        <p class="product-desc">${p.shortDesc}</p>
+        <p class="product-desc">${p.shortDesc || ''}</p>
         <div class="product-price-row">
           <span class="price">${p.price} ${STORE_CONFIG.currency}</span>
-          <span class="old-price">${p.oldPrice} ${STORE_CONFIG.currency}</span>
+          <span class="old-price">${p.oldPrice ? p.oldPrice + ' ' + STORE_CONFIG.currency : ''}</span>
         </div>
         <div class="product-actions">
           <button class="btn btn-outline" onclick="navigate('product', {id: ${p.id}})">التفاصيل</button>
