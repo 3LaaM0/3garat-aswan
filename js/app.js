@@ -1,5 +1,5 @@
 // ============================================
-// التطبيق الرئيسي - متجر WT Store الاحترافي (سحابي)
+// التطبيق الرئيسي - متجر WT Store الاحترافي (سحابي ومصحح)
 // ============================================
 
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
@@ -41,13 +41,24 @@ if (!document.getElementById("page-motion-styles")) {
 }
 
 function navigate(view, params = {}) {
+  closeMobileMenu();
+  
+  // معالجة الأقسام داخل الصفحة الرئيسية
+  if (view === "products" || view === "productsGrid" || view === "productsSection") {
+    scrollToSection("productsSection");
+    return;
+  }
+  if (view === "about" || view === "aboutSection") {
+    scrollToSection("aboutSection");
+    return;
+  }
+
   const hash = params.id ? `#${view}?id=${params.id}` : `#${view}`;
   if (window.location.hash !== hash) {
     window.location.hash = hash;
   } else {
     renderView(view, params);
   }
-  closeMobileMenu();
 }
 
 function parseHash() {
@@ -61,9 +72,9 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
-// دالة العرض مع أنيميشن الموشن السلس
+// دالة العرض بدقة ومنع النزول الخاطئ للأسفل
 function renderView(view, params) {
-  if (view === "products" || view === "productsGrid" || view === "productsSection") {
+  if (view === "products" || view === "productsSection") {
     scrollToSection("productsSection");
     return;
   }
@@ -91,7 +102,7 @@ function renderView(view, params) {
       currentActive.style.transform = "";
 
       activateTargetView(target, view, params);
-    }, 200);
+    }, 150);
   } else {
     activateTargetView(target, view, params);
   }
@@ -456,7 +467,6 @@ async function executeOrderSubmission(e) {
     createdAt: Date.now()
   };
 
-  // 1. رفع الطلب سحابياً إلى Firebase Firestore
   if (typeof firebase !== 'undefined') {
     try {
       const db = firebase.firestore();
@@ -466,12 +476,10 @@ async function executeOrderSubmission(e) {
     }
   }
 
-  // 2. الاحتفاظ بنسخة محلية للعميل في المتصفح الخاص به (لقسم طلباتي)
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
   savedOrders.push(order);
   localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
 
-  // 3. إرسال الإشعار لبوت التليجرام
   const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
   const chatId = '5535861156';
 
@@ -637,6 +645,12 @@ function scrollToSection(sectionId) {
     }
   }, 50);
 }
+
+// ---------- الاستماع لتغيير الهاش وتشغيل التوجيه ----------
+window.addEventListener("hashchange", () => {
+  const { view, params } = parseHash();
+  renderView(view, params);
+});
 
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
