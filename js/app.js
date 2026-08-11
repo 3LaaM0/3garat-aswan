@@ -12,8 +12,35 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
+// حقن CSS الأنيميشن والموشن السلس للتنقل بين الصفحات
+if (!document.getElementById("page-motion-styles")) {
+  const style = document.createElement("style");
+  style.id = "page-motion-styles";
+  style.innerHTML = `
+    .view {
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      will-change: opacity, transform;
+    }
+    .view.active {
+      display: block;
+    }
+    .view.page-motion-enter {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @keyframes pulse-dot {
+      0% { transform: scale(0.95); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function navigate(view, params = {}) {
-  window.scrollTo(0, 0);
   const hash = params.id ? `#${view}?id=${params.id}` : `#${view}`;
   if (window.location.hash !== hash) {
     window.location.hash = hash;
@@ -34,28 +61,101 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
-// دالة العرض مع أنيميشن الموشن السلس للمحتوى
+// دالة العرض مع أنيميشن الموشن السلس
 function renderView(view, params) {
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active", "page-motion-enter");
-  });
-
-  // الربط الذكي للرئيسية والمنتجات
-  let targetId = `view-${view}`;
-  if (view === "products") targetId = "view-home";
-
-  const target = document.getElementById(targetId) || document.getElementById("view-home");
-  if (target) {
-    target.classList.add("active");
-    // إعادة تشغيل أنيميشن الموشن عند كل تنقل
-    void target.offsetWidth; 
-    target.classList.add("page-motion-enter");
+  // معالجة الضغط على "المنتجات" أو "من نحن"
+  if (view === "products") {
+    showHomeAndScrollTo("productsGrid");
+    return;
+  }
+  if (view === "about") {
+    showHomeAndScrollTo("view-about", "footer");
+    return;
   }
 
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const currentActive = document.querySelector(".view.active");
+  let target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
+
+  // إذا كانت نفس الصفحة نشطة بالفعل
+  if (currentActive === target && target.classList.contains("page-motion-enter")) {
+    executeViewRender(view, params);
+    return;
+  }
+
+  // تطبيق التأثير السلس عند الخروج ثم الدخول
+  if (currentActive) {
+    currentActive.style.opacity = "0";
+    currentActive.style.transform = "translateY(-10px)";
+    setTimeout(() => {
+      currentActive.classList.remove("active", "page-motion-enter");
+      currentActive.style.display = "none";
+      currentActive.style.transform = "";
+
+      activateTargetView(target, view, params);
+    }, 200);
+  } else {
+    activateTargetView(target, view, params);
+  }
+}
+
+function activateTargetView(target, view, params) {
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active", "page-motion-enter");
+    v.style.display = "none";
+  });
+
+  target.style.display = "block";
+  target.classList.add("active");
+
+  executeViewRender(view, params);
+
+  // إطلاق موشن الظهور بالتدرج
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      target.classList.add("page-motion-enter");
+    });
+  });
+}
+
+function executeViewRender(view, params) {
   if (view === "product") renderProductDetails(params.id);
   if (view === "cart") renderCartView();
   if (view === "checkout") renderCheckoutView();
   if (view === "myorders") renderMyOrdersView();
+}
+
+// التمرير السلس للأقسام داخل الصفحة الرئيسية
+function showHomeAndScrollTo(...targetIds) {
+  const homeView = document.getElementById("view-home");
+  document.querySelectorAll(".view").forEach(v => {
+    if (v !== homeView) {
+      v.classList.remove("active", "page-motion-enter");
+      v.style.display = "none";
+    }
+  });
+
+  if (homeView) {
+    homeView.style.display = "block";
+    homeView.classList.add("active", "page-motion-enter");
+  }
+
+  setTimeout(() => {
+    let element = null;
+    for (const id of targetIds) {
+      const el = document.getElementById(id);
+      if (el) {
+        element = el;
+        break;
+      }
+    }
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+  }, 100);
 }
 
 window.addEventListener("hashchange", () => {
@@ -63,7 +163,7 @@ window.addEventListener("hashchange", () => {
   renderView(view, params);
 });
 
-// ---------- عرض المنتجات بالرئيسية متسنترة ----------
+// ---------- عرض المنتجات بالرئيسية ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
   if (!grid || typeof PRODUCTS === "undefined") return;
@@ -148,19 +248,6 @@ function renderProductDetails(id) {
     </div>
   `;
   window._detailQty = 1;
-}
-
-if (!document.getElementById('live-pulse-style')) {
-  const styleTag = document.createElement('style');
-  styleTag.id = 'live-pulse-style';
-  styleTag.innerHTML = `
-  @keyframes pulse-dot {
-    0% { transform: scale(0.95); opacity: 1; }
-    50% { transform: scale(1.4); opacity: 0.4; }
-    100% { transform: scale(0.95); opacity: 1; }
-  }
-  `;
-  document.head.appendChild(styleTag);
 }
 
 function changeDetailQty(delta) {
@@ -488,7 +575,7 @@ function renderMyOrdersView() {
 
     return `
       <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid #222;">
-        <div style="display: flex; justify-content: space-between; align- items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 10px;">
           <h3 style="margin: 0; color: #fff;">رقم الطلب: ${order.orderNumber}</h3>
           <span style="background: rgba(0,255,102,0.1); color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">${status}</span>
         </div>
@@ -537,19 +624,24 @@ function closeMobileMenu() {
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
   renderProductGrid();
-  Cart.updateCounter();
+  if (typeof Cart !== "undefined" && Cart.updateCounter) {
+    Cart.updateCounter();
+  }
+
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  const fb = document.getElementById("footerFb");
-  const wa = document.getElementById("footerWa");
-  const ig = document.getElementById("footerIg");
-  const wa2 = document.getElementById("footerWa2");
+  if (typeof STORE_CONFIG !== "undefined") {
+    const fb = document.getElementById("footerFb");
+    const wa = document.getElementById("footerWa");
+    const ig = document.getElementById("footerIg");
+    const wa2 = document.getElementById("footerWa2");
 
-  if (fb) fb.href = STORE_CONFIG.facebookUrl;
-  if (wa) wa.href = STORE_CONFIG.whatsappUrl;
-  if (ig) ig.href = STORE_CONFIG.instagramUrl;
-  if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
+    if (fb) fb.href = STORE_CONFIG.facebookUrl;
+    if (wa) wa.href = STORE_CONFIG.whatsappUrl;
+    if (ig) ig.href = STORE_CONFIG.instagramUrl;
+    if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
+  }
 
   const { view, params } = parseHash();
   renderView(view, params);
