@@ -73,8 +73,11 @@ const Cart = {
   },
 
   detailedItems() {
+    // جلب المنتجات المتاحة من الدالة الموحدة أو المتغير
+    const productsList = typeof getActiveProducts === 'function' ? getActiveProducts() : (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []);
+    
     return this.getItems().map(i => {
-      const product = PRODUCTS.find(p => p.id === i.id);
+      const product = productsList.find(p => p.id === i.id);
       return product ? { ...product, qty: i.qty } : null;
     }).filter(Boolean);
   },
