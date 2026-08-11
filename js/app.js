@@ -1,5 +1,5 @@
 // ============================================
-// التطبيق الرئيسي - متجر WT Store الاحترافي
+// التطبيق الرئيسي - متجر WT Store الاحترافي (سحابي)
 // ============================================
 
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
@@ -63,7 +63,6 @@ function parseHash() {
 
 // دالة العرض مع أنيميشن الموشن السلس
 function renderView(view, params) {
-  // معالجة الضغط على "المنتجات" أو "من نحن"
   if (view === "products" || view === "productsGrid" || view === "productsSection") {
     scrollToSection("productsSection");
     return;
@@ -78,13 +77,11 @@ function renderView(view, params) {
   const currentActive = document.querySelector(".view.active");
   let target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
 
-  // إذا كانت نفس الصفحة نشطة بالفعل
   if (currentActive === target && target.classList.contains("page-motion-enter")) {
     executeViewRender(view, params);
     return;
   }
 
-  // تطبيق التأثير السلس عند الخروج ثم الدخول
   if (currentActive) {
     currentActive.style.opacity = "0";
     currentActive.style.transform = "translateY(-10px)";
@@ -111,7 +108,6 @@ function activateTargetView(target, view, params) {
 
   executeViewRender(view, params);
 
-  // إطلاق موشن الظهور بالتدرج
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       target.classList.add("page-motion-enter");
@@ -139,12 +135,11 @@ function getActiveProducts() {
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
 
-// ---------- عرض المنتجات بالرئيسية من الـ LocalStorage الموحد ----------
+// ---------- عرض المنتجات بالرئيسية ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
 
-  // جلب قائمة المنتجات بعد الحذف والإضافة في الأدمن
   const productsList = getActiveProducts();
 
   if (!productsList || productsList.length === 0) {
@@ -457,13 +452,26 @@ async function executeOrderSubmission(e) {
     items: items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
     total: Cart.total(),
     date: new Date().toLocaleDateString("ar-EG"),
-    status: "بانتظار التأكيد"
+    status: "بانتظار التأكيد",
+    createdAt: Date.now()
   };
 
+  // 1. رفع الطلب سحابياً إلى Firebase Firestore
+  if (typeof firebase !== 'undefined') {
+    try {
+      const db = firebase.firestore();
+      await db.collection("orders").add(order);
+    } catch (err) {
+      console.error("خطأ في رفع الطلب للسحابة:", err);
+    }
+  }
+
+  // 2. الاحتفاظ بنسخة محلية للعميل في المتصفح الخاص به (لقسم طلباتي)
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
   savedOrders.push(order);
   localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
 
+  // 3. إرسال الإشعار لبوت التليجرام
   const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
   const chatId = '5535861156';
 
