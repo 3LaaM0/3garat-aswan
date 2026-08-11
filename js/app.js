@@ -34,24 +34,30 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
+// دالة العرض مع أنيميشن الموشن جرافيك السلس
 function renderView(view, params) {
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
     v.style.opacity = 0;
+    v.style.transform = "translateY(15px)";
   });
 
   const target = document.getElementById(`view-${view}`);
   if (target) {
     target.classList.add("active");
-    // أنيميشن ظهور ناعم وحركي (Smooth Motion Effect)
+    // تطبيق موشن أنيميشن احترافي عند الدخول لأي صفحة
     setTimeout(() => {
-      target.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+      target.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
       target.style.opacity = 1;
       target.style.transform = "translateY(0)";
-    }, 10);
+    }, 20);
   } else {
     const homeTarget = document.getElementById("view-home");
-    if(homeTarget) homeTarget.classList.add("active");
+    if(homeTarget) {
+      homeTarget.classList.add("active");
+      homeTarget.style.opacity = 1;
+      homeTarget.style.transform = "translateY(0)";
+    }
     view = "home";
   }
 
@@ -106,7 +112,7 @@ function renderProductDetails(id) {
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
 
   el.innerHTML = `
-    <div class="container product-details fade-in" style="animation: fadeIn 0.4s ease;">
+    <div class="container product-details">
       <button class="back-btn" onclick="navigate('home')">← العودة للمنتجات</button>
       <div class="details-grid">
         <div class="details-image">
@@ -136,7 +142,7 @@ function renderProductDetails(id) {
             ${product.specs.map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
 
-          <div class="customer-reviews-box" style="background: var(--panel-bg, #151515); border: 1px solid var(--border-color, #222); padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <div class="customer-reviews-box" style="background: #151515; border: 1px solid #222; padding: 15px; border-radius: 8px; margin: 20px 0;">
             <h4 style="color: #fff; margin-bottom: 8px; font-size: 15px;">💬 آراء بعض العملاء:</h4>
             <p style="color: #ccc; font-size: 13px; margin-bottom: 6px;">"المنتج وصلني أصلي وبنفس المواصفات، خامة ممتازة جداً." - <b>محمد أ.</b></p>
           </div>
@@ -167,10 +173,6 @@ if (!document.getElementById('live-pulse-style')) {
     50% { transform: scale(1.4); opacity: 0.4; }
     100% { transform: scale(0.95); opacity: 1; }
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
   `;
   document.head.appendChild(styleTag);
 }
@@ -199,7 +201,7 @@ function renderCartView() {
 
   if (items.length === 0) {
     el.innerHTML = `
-      <div class="container fade-in" style="animation: fadeIn 0.4s ease;">
+      <div class="container">
         <h1 class="page-title">سلة التسوق</h1>
         <div class="empty-state">
           <div class="empty-icon">🛒</div>
@@ -211,7 +213,7 @@ function renderCartView() {
   }
 
   const rows = items.map(i => `
-    <div class="cart-row fade-in">
+    <div class="cart-row">
       <img src="${i.image}" alt="${i.name}">
       <div class="cart-row-info">
         <h4>${i.name}</h4>
@@ -228,7 +230,7 @@ function renderCartView() {
   `).join("");
 
   el.innerHTML = `
-    <div class="container fade-in" style="animation: fadeIn 0.4s ease;">
+    <div class="container">
       <h1 class="page-title">سلة التسوق</h1>
       <div class="cart-layout">
         <div class="cart-items">
@@ -254,7 +256,7 @@ function renderCheckoutView() {
 
   if (items.length === 0) {
     el.innerHTML = `
-      <div class="container fade-in">
+      <div class="container">
         <h1 class="page-title">إتمام الطلب</h1>
         <div class="empty-state">
           <div class="empty-icon">🛒</div>
@@ -273,7 +275,7 @@ function renderCheckoutView() {
   `).join("");
 
   el.innerHTML = `
-    <div class="container fade-in" style="animation: fadeIn 0.4s ease;">
+    <div class="container">
       <h1 class="page-title">إتمام الطلب</h1>
       <div class="checkout-layout">
         <form id="checkoutForm" class="checkout-form">
@@ -454,7 +456,7 @@ function renderSuccessView(order) {
     return;
   }
   el.innerHTML = `
-    <div class="container success-view fade-in" style="animation: fadeIn 0.4s ease;">
+    <div class="container success-view">
       <div class="success-icon">🎉</div>
       <h1>تم استلام طلبك بنجاح</h1>
       <div class="success-card">
@@ -470,7 +472,7 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- قسم "طلباتي" الجديد (بدل تتبع الطلب) ----------
+// ---------- قسم "طلباتي" ----------
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
@@ -479,7 +481,7 @@ function renderMyOrdersView() {
   
   if (savedOrders.length === 0) {
     el.innerHTML = `
-      <div class="container fade-in" style="animation: fadeIn 0.4s ease; text-align: center; padding: 40px 0;">
+      <div class="container" style="text-align: center; padding: 40px 0;">
         <h1 class="page-title">📦 طلباتي السابقة</h1>
         <div class="empty-state">
           <div class="empty-icon">📭</div>
@@ -499,8 +501,8 @@ function renderMyOrdersView() {
     if (status === "تم التسليم") statusColor = "#00ff66";
 
     return `
-      <div class="success-card fade-in" style="margin-bottom: 20px; text-align: right; border: 1px solid var(--border-color, #222); animation: fadeIn 0.3s ease;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #222); padding-bottom: 10px; margin-bottom: 10px;">
+      <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid #222;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 10px;">
           <h3 style="margin: 0; color: #fff;">رقم الطلب: ${order.orderNumber}</h3>
           <span style="background: rgba(0,255,102,0.1); color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">${status}</span>
         </div>
@@ -508,13 +510,13 @@ function renderMyOrdersView() {
         <div class="summary-row"><span>الهاتف:</span><span>${order.phone}</span></div>
         <div class="summary-row"><span>العنوان:</span><span>${order.province} - ${order.city} - ${order.address}</span></div>
         <div class="summary-row"><span>الإجمالي:</span><span style="color: #00ff66; font-weight: bold;">${order.total} ${STORE_CONFIG.currency}</span></div>
-        <div style="margin-top: 10px; font-size: 13px; color: var(--text-muted, #888);">تاريخ الطلب: ${order.date}</div>
+        <div style="margin-top: 10px; font-size: 13px; color: #888;">تاريخ الطلب: ${order.date}</div>
       </div>
     `;
   }).join("");
 
   el.innerHTML = `
-    <div class="container fade-in" style="animation: fadeIn 0.4s ease; max-width: 800px; margin: 0 auto; padding: 20px;">
+    <div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
       <h1 class="page-title" style="text-align: center; margin-bottom: 30px;">📦 طلباتي السابقة</h1>
       ${ordersHtml}
     </div>
@@ -546,22 +548,6 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
-// ---------- الثيم (الوضع الليلي والنهاري) ----------
-function toggleStoreTheme() {
-  const body = document.body;
-  const btn = document.getElementById('storeThemeBtn');
-  
-  if (body.classList.contains('light-store-mode')) {
-    body.classList.remove('light-store-mode');
-    if(btn) btn.textContent = '🌙';
-    localStorage.setItem('wt_store_theme', 'dark');
-  } else {
-    body.classList.add('light-store-mode');
-    if(btn) btn.textContent = '☀️';
-    localStorage.setItem('wt_store_theme', 'light');
-  }
-}
-
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
   renderProductGrid();
@@ -578,13 +564,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (wa) wa.href = STORE_CONFIG.whatsappUrl;
   if (ig) ig.href = STORE_CONFIG.instagramUrl;
   if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
-
-  const savedTheme = localStorage.getItem('wt_store_theme');
-  if (savedTheme === 'light') {
-    document.body.classList.add('light-store-mode');
-    const btn = document.getElementById('storeThemeBtn');
-    if(btn) btn.textContent = '☀️';
-  }
 
   const { view, params } = parseHash();
   renderView(view, params);
