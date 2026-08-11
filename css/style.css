@@ -341,3 +341,30 @@ body.light-store-mode h4,
 body.light-store-mode .product-name {
   color: #111 !important;
 }
+/* تسنتر المنتجات وتطبيق أنيميشن سلس عند فتح الصفحة */
+#productsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+/* تأثير موشن دخول أنيق وناعم */
+.page-motion-enter {
+  animation: pageSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
