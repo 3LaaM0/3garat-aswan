@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WT Store | متجر الإلكترونيات</title>
+<link rel="icon" href="assets/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo" onclick="navigate('home')">
+      <img src="assets/logo.jpg" alt="WT Store">
+      <span class="logo-text">WT <span>Store</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li><a onclick="navigate('home')">الرئيسية</a></li>
+      <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">المنتجات</a></li>
+      <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'}),80)">من نحن</a></li>
+      <li><a onclick="navigate('tracking')">تتبع الطلب</a></li>
+    </ul>
+
+    <div class="header-actions">
+      <a class="cart-btn" onclick="navigate('cart')">
+        🛒<span class="cart-count" id="cartCount">0</span>
+      </a>
+      <button class="btn btn-primary" onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">تسوق الآن</button>
+      <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Mobile Menu ===== -->
+<div class="mobile-menu" id="mobileMenu">
+  <a onclick="navigate('home')">الرئيسية</a>
+  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">المنتجات</a>
+  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'}),80)">من نحن</a>
+  <a onclick="navigate('tracking')">تتبع الطلب</a>
+  <a onclick="navigate('cart')">سلة التسوق 🛒</a>
+</div>
+
+<main>
+
+  <!-- ===== الرئيسية ===== -->
+  <div class="view active" id="view-home">
+
+    <section class="hero">
+      <div class="hero-bg" style="background-image:url('assets/cover.jpg')"></div>
+      <div class="hero-content">
+        <span class="hero-eyebrow">إلكترونيات أصلية بضمان</span>
+        <h1>تقنية تواكب <span class="accent">أسلوب حياتك</span></h1>
+        <p>سماعات، ساعات ذكية، ومكبرات صوت مختارة بعناية — جودة عالية وتصميم يلفت الأنظار.</p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),10)">تسوق الآن</button>
+          <button class="btn btn-outline btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),10)">استكشف المنتجات</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="productsSection">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">مختاراتنا</span>
+          <h2>منتجاتنا المميزة</h2>
+          <p>أربع قطع مختارة بعناية لتناسب احتياجاتك اليومية</p>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+    </section>
+
+    <section class="section about-section" id="aboutSection">
+      <div class="container">
+        <div class="about-content">
+          <div class="about-text">
+            <span class="eyebrow" style="color:var(--accent); font-weight:700; font-size:13px; letter-spacing:2px;">من نحن</span>
+            <h2 style="font-size:30px; font-weight:800; margin:10px 0 18px;">WT Store لعشاق التقنية</h2>
+            <p>في WT Store، نوفر لك أحدث الإكسسوارات التقنية بجودة عالية وأسعار مناسبة. نركز على اختيار منتجات موثوقة من العلامات المعروفة، مع تجربة شراء سهلة وسريعة من الطلب وحتى التوصيل.</p>
+            <p>هدفنا أن نكون وجهتك الأولى لكل ما يخص السماعات، الساعات الذكية، ومستلزمات الصوت.</p>
+            <div class="about-stats">
+              <div><strong>4+</strong><span>منتجات مختارة</span></div>
+              <div><strong>100%</strong><span>ضمان أصالة</span></div>
+              <div><strong>24/7</strong><span>دعم عبر واتساب</span></div>
+            </div>
+          </div>
+          <div class="about-image">
+            <img src="assets/cover.jpg" alt="WT Store">
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===== تفاصيل المنتج ===== -->
+  <div class="view" id="view-product"></div>
+
+  <!-- ===== السلة ===== -->
+  <div class="view" id="view-cart"></div>
+
+  <!-- ===== الدفع ===== -->
+  <div class="view" id="view-checkout"></div>
+
+  <!-- ===== نجاح الطلب ===== -->
+  <div class="view" id="view-success"></div>
+
+  <!-- ===== تتبع الطلب ===== -->
+  <div class="view" id="view-tracking">
+    <div class="container tracking-view">
+      <h1 class="page-title" style="margin-top:20px;">تتبع طلبك</h1>
+      <form class="tracking-form fade-in" onsubmit="submitTracking(event)">
+        <div class="form-group">
+          <label>رقم الطلب</label>
+          <input type="text" id="trackOrderNumber" placeholder="مثال: QR-2026-58321">
+        </div>
+        <div class="form-group">
+          <label>رقم الهاتف</label>
+          <input type="tel" id="trackPhone" placeholder="رقم الهاتف المستخدم في الطلب">
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg full">تتبع الطلب</button>
+      </form>
+      <div id="trackingResult"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img src="assets/logo.jpg" alt="WT Store">
+        <p>وجهتك لأحدث الإكسسوارات التقنية بجودة عالية وتجربة شراء سهلة وموثوقة.</p>
+        <div class="social-icons">
+          <a id="footerFb" href="#" target="_blank" aria-label="Facebook">📘</a>
+          <a id="footerWa" href="#" target="_blank" aria-label="WhatsApp">💬</a>
+          <a id="footerIg" href="#" target="_blank" aria-label="Instagram">📷</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>روابط سريعة</h4>
+        <ul>
+          <li><a onclick="navigate('home')">الرئيسية</a></li>
+          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">المنتجات</a></li>
+          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'}),80)">من نحن</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>خدمة العملاء</h4>
+        <ul>
+          <li><a onclick="navigate('tracking')">تتبع الطلب</a></li>
+          <li><a onclick="navigate('cart')">سلة التسوق</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>تواصل معنا</h4>
+        <ul>
+          <li><a id="footerWa2" href="#" target="_blank">راسلنا عبر واتساب</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © <span id="year"></span> WT Store. جميع الحقوق محفوظة.
+    </div>
+  </div>
+</footer>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/tracking.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
