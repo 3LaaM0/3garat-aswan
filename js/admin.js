@@ -1,78 +1,163 @@
-// ============================================
-// لوحة التحكم الإدارية المخفية (معدلة ومضمونة)
-// ============================================
+// التنقل بين الأقسام في لوحة التحكم
+function switchSection(sectionId, element) {
+  document.querySelectorAll('.section-content').forEach(sec => sec.classList.remove('active'));
+  document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+  
+  document.getElementById('sec-' + sectionId).classList.add('active');
+  if (element) element.classList.add('active');
 
-window.addEventListener("hashchange", checkAdminRoute);
-window.addEventListener("load", checkAdminRoute);
+  // تحديث العنوان
+  const titles = {
+    home: "نظرة عامة على المتجر",
+    products: "إدارة المنتجات",
+    categories: "إدارة الفئات",
+    orders: "إدارة الطلبات",
+    customers: "قائمة العملاء",
+    coupons: "إدارة الكوبونات",
+    offers: "العروض والخصومات",
+    reviews: "تقييمات العملاء",
+    banners: "إدارة البانرات",
+    analytics: "التحليلات والتقارير",
+    settings: "إعدادات المتجر"
+  };
+  document.getElementById('sectionTitle').textContent = titles[sectionId] || "لوحة التحكم";
+  
+  if (sectionId === 'orders') renderAdminOrders();
+  if (sectionId === 'products') renderAdminProducts();
+}
 
-function checkAdminRoute() {
-  if (window.location.hash.includes("admin")) {
-    renderAdminPanelDirectly();
+// تبديل الدارك مود واللايت مود
+function toggleTheme() {
+  const body = document.body;
+  const themeIcon = document.getElementById('themeIcon');
+  if (body.classList.contains('dark-mode')) {
+    body.classList.remove('dark-mode');
+    body.classList.add('light-mode');
+    themeIcon.textContent = '🌙';
+    localStorage.setItem('wt_theme', 'light');
+  } else {
+    body.classList.remove('light-mode');
+    body.classList.add('dark-mode');
+    themeIcon.textContent = '☀️';
+    localStorage.setItem('wt_theme', 'dark');
   }
 }
 
-function renderAdminPanelDirectly() {
-  // إخفاء باقي الأقسام
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-  
-  // التأكد من وجود عنصر الـ admin أو إنشائه فوراً
-  let adminEl = document.getElementById("view-admin");
-  if (!adminEl) {
-    adminEl = document.createElement("div");
-    adminEl.className = "view active";
-    adminEl.id = "view-admin";
-    const main = document.querySelector("main");
-    if (main) main.appendChild(adminEl);
-  } else {
-    adminEl.classList.add("active");
+// تحميل الثفوظ عند الفتح
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('wt_theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.remove('dark-mode');
+    document.body.classList.add('light-mode');
+    document.getElementById('themeIcon').textContent = '🌙';
   }
+  
+  // تحديث الإحصائيات في الصفحة الرئيسية
+  updateDashboardStats();
+});
+
+function updateDashboardStats() {
+  const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+  document.getElementById('statTotalOrders').textContent = savedOrders.length;
+  
+  let totalRev = savedOrders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+  document.getElementById('statTotalRevenue').textContent = totalRev + " ج.م";
+  
+  let pending = savedOrders.filter(o => o.status === "بانتظار التأكيد" || !o.status).length;
+  document.getElementById('statPendingOrders').textContent = pending;
+  
+  if (typeof PRODUCTS !== 'undefined') {
+    document.getElementById('statTotalProducts').textContent = PRODUCTS.length;
+  }
+}
+
+// عرض الطلبات في جدول الأدمن
+function renderAdminOrders() {
+  const container = document.getElementById('adminOrdersTable');
+  if (!container) return;
 
   const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
-
-  let rows = "";
   if (savedOrders.length === 0) {
-    rows = `<tr><td colspan="4" style="padding:20px; text-align:center; color:#888;">لا توجد طلبات مخزنة محلياً حتى الآن</td></tr>`;
-  } else {
-    rows = savedOrders.map((o, index) => `
-      <tr style="border-bottom: 1px solid #333;">
-        <td style="padding: 12px; color:#fff;">${o.orderNumber}</td>
-        <td style="padding: 12px; color:#fff;">${o.name || 'بدون اسم'}</td>
-        <td style="padding: 12px; color: #00ff66; font-weight: bold;">${o.status || 'بانتظار التأكيد'}</td>
-        <td style="padding: 12px;">
-          <button style="padding: 6px 12px; margin-left: 5px; background: #ffaa00; color: #000; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="updateAdminOrderStatus(${index}, 'جاري التجهيز')">تجهيز</button>
-          <button style="padding: 6px 12px; margin-left: 5px; background: #00aaff; color: #fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="updateAdminOrderStatus(${index}, 'في طريقها للتوصيل')">شحن</button>
-          <button style="padding: 6px 12px; background: #00ff66; color: #000; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="updateAdminOrderStatus(${index}, 'تم التسليم')">تسليم</button>
-        </td>
-      </tr>
-    `).join("");
+    container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">لا توجد طلبات مسجلة حتى الآن.</p>`;
+    return;
   }
 
-  adminEl.innerHTML = `
-    <div class="container" style="padding: 40px 20px;">
-      <h1 style="margin-bottom: 20px; font-size: 26px; color: #fff; text-align: right;">لوحة تحكم المتجر (الطلبات)</h1>
-      <div style="background: #111; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333;">
-        <table style="width:100%; border-collapse: collapse; text-align: right;">
-          <thead>
-            <tr style="background: #222; border-bottom: 2px solid #444; color: #aaa;">
-              <th style="padding: 12px;">رقم الطلب</th>
-              <th style="padding: 12px;">اسم العميل</th>
-              <th style="padding: 12px;">الحالة الحالية</th>
-              <th style="padding: 12px;">إجراءات التحديث</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-    </div>
+  let html = `
+    <table>
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>اسم العميل</th>
+          <th>الهاتف</th>
+          <th>الإجمالي</th>
+          <th>الحالة الحالية</th>
+          <th>إجراءات التحديث</th>
+        </tr>
+      </thead>
+      <tbody>
   `;
+
+  savedOrders.forEach((order, index) => {
+    html += `
+      <tr>
+        <td><b>${order.orderNumber}</b></td>
+        <td>${order.name}</td>
+        <td>${order.phone}</td>
+        <td>${order.total} ج.م</td>
+        <td><span style="color: #00ff66; font-weight: bold;">${order.status || 'بانتظار التأكيد'}</span></td>
+        <td>
+          <button class="action-btn btn-blue" onclick="updateOrderStatus(${index}, 'جاري التجهيز')">تجهيز</button>
+          <button class="action-btn btn-blue" onclick="updateOrderStatus(${index}, 'في طريقها للتوصيل')">شحن</button>
+          <button class="action-btn btn-green" onclick="updateOrderStatus(${index}, 'تم التسليم')">تسليم</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 }
 
-function updateAdminOrderStatus(index, newStatus) {
+function updateOrderStatus(index, newStatus) {
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
   if (savedOrders[index]) {
     savedOrders[index].status = newStatus;
     localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
-    alert("تم تحديث الحالة بنجاح إلى: " + newStatus);
-    renderAdminPanelDirectly();
+    alert("تم تحديث حالة الطلب إلى: " + newStatus);
+    renderAdminOrders();
+    updateDashboardStats();
   }
+}
+
+// عرض المنتجات في لوحة التحكم
+function renderAdminProducts() {
+  const container = document.getElementById('productsTableContainer');
+  if (!container || typeof PRODUCTS === 'undefined') return;
+
+  let html = `
+    <table>
+      <thead>
+        <tr>
+          <th>الصورة</th>
+          <th>اسم المنتج</th>
+          <th>السعر</th>
+          <th>السعر القديم</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  PRODUCTS.forEach(p => {
+    html += `
+      <tr>
+        <td><img src="${p.image}" width="40" height="40" style="border-radius: 5px; object-fit: cover;"></td>
+        <td><b>${p.name}</b></td>
+        <td>${p.price} ج.م</td>
+        <td>${p.oldPrice} ج.م</td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
 }
