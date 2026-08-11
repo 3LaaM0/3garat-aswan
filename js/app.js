@@ -89,7 +89,20 @@ function executeViewRender(view, params) {
 let cloudProducts = [];
 
 function initCloudProducts() {
+  // تهيئة Firebase في ملف العميل إذا لم يكن مهيأً
   if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+      const firebaseConfig = {
+        apiKey: "AIzaSyBgiUuOxa9JKG3lTonpl8uYPaJBlUSisAU",
+        authDomain: "wt-store-a71af-3c9a7.firebaseapp.com",
+        projectId: "wt-store-a71af-3c9a7",
+        storageBucket: "wt-store-a71af-3c9a7.appspot.com",
+        messagingSenderId: "500683952997",
+        appId: "1:500683952997:web:f64872a5676cde173e878c"
+      };
+      firebase.initializeApp(firebaseConfig);
+    }
+
     const db = firebase.firestore();
     db.collection("products").onSnapshot((snapshot) => {
       cloudProducts = [];
@@ -627,7 +640,7 @@ window.addEventListener("hashchange", () => {
 
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
-  initCloudProducts(); // تفعيل المزامنة السحابية الحية للمنتجات
+  initCloudProducts(); // تفعيل جلب وتحديث المنتجات سحابياً فوراً
   
   if (typeof Cart !== "undefined" && Cart.updateCounter) {
     Cart.updateCounter();
