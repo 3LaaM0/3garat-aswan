@@ -82,7 +82,7 @@
     .modal-content h3 { margin-bottom: 20px; font-size: 20px; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px 14px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; outline: none; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; outline: none; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
     .btn-cancel { background: var(--bg-body); color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
@@ -212,7 +212,7 @@
     </section>
   </main>
 
-  <!-- Add Product Modal -->
+  <!-- Add Product Modal مع رفع الصور المباشر -->
   <div class="modal" id="addProductModal">
     <div class="modal-content">
       <h3>إضافة منتج جديد</h3>
@@ -229,8 +229,11 @@
         <input type="number" id="newProdOldPrice" placeholder="950">
       </div>
       <div class="form-group">
-        <label>رابط صورة المنتج (URL)</label>
-        <input type="text" id="newProdImage" placeholder="assets/products/headphone.svg">
+        <label>اختر صورة المنتج من جهازك</label>
+        <input type="file" id="newProdFile" accept="image/*" onchange="handleImageUpload(event)" style="padding: 6px;">
+        <div id="previewContainer" style="margin-top: 8px; display: none; text-align: center;">
+          <img id="imgPreview" src="" alt="معاينة" style="max-height: 80px; border-radius: 6px; border: 1px solid var(--border);">
+        </div>
       </div>
       <div class="form-group">
         <label>الوصف القصير</label>
@@ -245,6 +248,8 @@
 
   <script src="js/products.js"></script>
   <script>
+    let uploadedImageBase64 = "assets/logo.jpg";
+
     document.addEventListener("DOMContentLoaded", () => {
       initAdminPage();
     });
@@ -255,14 +260,29 @@
       updateStats();
     }
 
-    // جلب قائمة المنتجات
+    // جلب قائمة المنتجات المحدثة
     function getProductsList() {
       const saved = localStorage.getItem('wt_custom_products');
       if (saved) return JSON.parse(saved);
       return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
     }
 
-    // عرض المنتجات
+    // معالجة اختيار صورة من الجهاز وتحويلها لـ Base64
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          uploadedImageBase64 = e.target.result;
+          const preview = document.getElementById('imgPreview');
+          preview.src = uploadedImageBase64;
+          document.getElementById('previewContainer').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // عرض المنتجات في جدول الأدمن
     function renderProducts() {
       const tbody = document.getElementById('adminProductsTable');
       if (!tbody) return;
@@ -286,17 +306,20 @@
       `).join('');
     }
 
-    // حذف منتج وتحديث الـ LocalStorage فوراً
-  function deleteProduct(idx) {
-  if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
-    let products = getStoreProducts();
-    products.splice(idx, 1);
-    localStorage.setItem('wt_custom_products', JSON.stringify(products));
-    initDashboard(); // إعادة رسم جدول الأدمن
-  }
-}
+    // حذف منتج وتحديث المتجر فورا
+    function deleteProduct(idx) {
+      if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+        let products = getProductsList();
+        products.splice(idx, 1);
+        localStorage.setItem('wt_custom_products', JSON.stringify(products));
+        initAdminPage();
+      }
+    }
 
     function openAddModal() {
+      uploadedImageBase64 = "assets/logo.jpg";
+      document.getElementById('newProdFile').value = '';
+      document.getElementById('previewContainer').style.display = 'none';
       document.getElementById('addProductModal').classList.add('active');
     }
 
@@ -304,15 +327,15 @@
       document.getElementById('addProductModal').classList.remove('active');
     }
 
+    // حفظ منتج جديد بالصورة المرفوعة
     function saveNewProduct() {
       const name = document.getElementById('newProdName').value.trim();
       const price = document.getElementById('newProdPrice').value.trim();
       const oldPrice = document.getElementById('newProdOldPrice').value.trim();
-      const image = document.getElementById('newProdImage').value.trim();
       const desc = document.getElementById('newProdDesc').value.trim();
 
-      if (!name || !price || !image) {
-        alert("يرجى إدخال اسم المنتج والسعر ورابط الصورة!");
+      if (!name || !price) {
+        alert("يرجى إدخال اسم المنتج والسعر على الأقل!");
         return;
       }
 
@@ -322,7 +345,7 @@
         name: name,
         price: parseInt(price, 10),
         oldPrice: oldPrice ? parseInt(oldPrice, 10) : parseInt(price, 10) + 200,
-        image: image,
+        image: uploadedImageBase64,
         shortDesc: desc || "منتج ممتاز عالي الجودة.",
         description: desc || "منتج عالي الجودة متوفر الآن.",
         specs: ["ضمان أصلية 100%", "شحن سريع"]
@@ -334,11 +357,11 @@
       document.getElementById('newProdName').value = '';
       document.getElementById('newProdPrice').value = '';
       document.getElementById('newProdOldPrice').value = '';
-      document.getElementById('newProdImage').value = '';
       document.getElementById('newProdDesc').value = '';
 
       closeAddModal();
       initAdminPage();
+      alert("تمت إضافة المنتج بنجاح وسيظهر في المتجر فوراً!");
     }
 
     // عرض الطلبات وتعديل حالتها
@@ -353,7 +376,7 @@
         if (savedOrders.length === 0) {
           dashTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد طلبات واردة بعد.</td></tr>`;
         } else {
-          dashTbody.innerHTML = savedOrders.slice(-5).reverse().map((o, idx) => `
+          dashTbody.innerHTML = savedOrders.slice(-5).reverse().map(o => `
             <tr>
               <td><b>${o.orderNumber}</b></td>
               <td>${o.name}</td>
@@ -391,7 +414,7 @@
       }
     }
 
-    // تغيير حالة الطلب وتحديثها فوراً في متصفح الزبون
+    // تغيير حالة الطلب وتحديثها فوراً للعميل
     function updateOrderStatus(orderNumber, newStatus) {
       let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
       const target = savedOrders.find(o => o.orderNumber === orderNumber);
