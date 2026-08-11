@@ -261,7 +261,7 @@ function renderCheckoutView() {
     </div>`;
 }
 
-function submitOrder(e) {
+async function submitOrder(e) {
   e.preventDefault();
   const fields = {
     fName: "يرجى إدخال الاسم",
@@ -288,8 +288,11 @@ function submitOrder(e) {
   if (!valid) return;
 
   const items = Cart.detailedItems();
+  const orderNumber = Orders.generateOrderNumber();
+  const itemsText = items.map(i => `• ${i.name} (×${i.qty}) - ${i.price * i.qty} ${STORE_CONFIG.currency}`).join("\n");
+
   const order = {
-    orderNumber: Orders.generateOrderNumber(),
+    orderNumber: orderNumber,
     name: values.fName,
     phone: values.fPhone,
     whatsapp: values.fWhatsapp,
@@ -302,6 +305,42 @@ function submitOrder(e) {
     date: new Date().toLocaleDateString("ar-EG"),
     status: "بانتظار التأكيد"
   };
+
+  // إرسال البيانات مباشرة إلى تليجرام
+  const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
+  const chatId = '5535861156';
+
+  const telegramMessage = `
+🔔 طلب جديد من متجر WT Store!
+
+🔖 رقم الطلب: ${orderNumber}
+👤 الاسم: ${values.fName}
+📞 الهاتف: ${values.fPhone}
+💬 واتساب: ${values.fWhatsapp}
+📍 المحافظة: ${values.fProvince}
+🏙️ المدينة: ${values.fCity}
+🏠 العنوان: ${values.fAddress}
+📝 ملاحظات: ${order.notes || 'لا يوجد'}
+
+🛒 تفاصيل المنتجات:
+${itemsText}
+
+💰 الإجمالي: ${order.total} ${STORE_CONFIG.currency}
+  `.trim();
+
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: telegramMessage,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch (error) {
+    console.error('خطأ في إرسال تليجرام:', error);
+  }
 
   Orders.save(order);
   Orders.sendToAutomation(order);
