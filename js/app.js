@@ -213,7 +213,8 @@ function renderCheckoutView() {
     <div class="container">
       <h1 class="page-title">إتمام الطلب</h1>
       <div class="checkout-layout">
-        <form id="checkoutForm" class="checkout-form fade-in" onsubmit="submitOrder(event)">
+        <!-- تم إزالة الـ onsubmit العشوائي وتأمين الفورم -->
+        <form id="checkoutForm" class="checkout-form fade-in">
           <div class="form-group">
             <label>الاسم الكامل</label>
             <input type="text" id="fName" placeholder="مثال: أحمد محمد">
@@ -250,7 +251,7 @@ function renderCheckoutView() {
             <label>ملاحظات إضافية (اختياري)</label>
             <textarea id="fNotes" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
           </div>
-          <button type="submit" class="btn btn-primary btn-lg full">تأكيد الطلب</button>
+          <button type="button" id="confirmOrderBtn" class="btn btn-primary btn-lg full">تأكيد الطلب</button>
         </form>
         <div class="cart-summary fade-in">
           <h3>ملخص الطلب</h3>
@@ -259,14 +260,18 @@ function renderCheckoutView() {
         </div>
       </div>
     </div>`;
+
+  // ربط زر تأكيد الطلب برمجياً حصرياً داخل صفحة الدفع
+  setTimeout(() => {
+    const btn = document.getElementById("confirmOrderBtn");
+    if (btn) {
+      btn.onclick = executeOrderSubmission;
+    }
+  }, 100);
 }
 
-async function submitOrder(e) {
-  e.preventDefault();
-
-  // منع أي تشغيل للدالة إذا لم يكن المستخدم في صفحة الدفع (مثل الضغط على زرار تسوق الآن)
-  const checkoutForm = document.getElementById("checkoutForm");
-  if (!checkoutForm) return;
+async function executeOrderSubmission(e) {
+  if (e) e.preventDefault();
 
   const fields = {
     fName: "يرجى إدخال الاسم",
@@ -282,12 +287,14 @@ async function submitOrder(e) {
   for (const [id, msg] of Object.entries(fields)) {
     const input = document.getElementById(id);
     const errEl = document.getElementById(`err-${id}`);
-    values[id] = input.value.trim();
-    if (!values[id]) {
-      errEl.textContent = msg;
-      valid = false;
-    } else {
-      errEl.textContent = "";
+    if (input) {
+      values[id] = input.value.trim();
+      if (!values[id]) {
+        if (errEl) errEl.textContent = msg;
+        valid = false;
+      } else {
+        if (errEl) errEl.textContent = "";
+      }
     }
   }
   if (!valid) return;
@@ -304,7 +311,7 @@ async function submitOrder(e) {
     province: values.fProvince,
     city: values.fCity,
     address: values.fAddress,
-    notes: document.getElementById("fNotes").value.trim(),
+    notes: document.getElementById("fNotes") ? document.getElementById("fNotes").value.trim() : '',
     items: items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
     total: Cart.total(),
     date: new Date().toLocaleDateString("ar-EG"),
@@ -430,7 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("footerFb").href = STORE_CONFIG.facebookUrl;
   document.getElementById("footerWa").href = STORE_CONFIG.whatsappUrl;
   document.getElementById("footerIg").href = STORE_CONFIG.instagramUrl;
-  document.getElementById("footerWa2").href, STORE_CONFIG.whatsappUrl;
+  document.getElementById("footerWa2").href = STORE_CONFIG.whatsappUrl;
 
   const { view, params } = parseHash();
   renderView(view, params);
