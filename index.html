@@ -21,7 +21,7 @@
       <span class="logo-text">WT <span>Store</span></span>
     </div>
 
-    <!-- الروابط مع الإيموشنز الصحيحة والتنقل السلس -->
+    <!-- الروابط مع الإيموشنز والتنقل السلس المباشر -->
     <ul class="nav-links">
       <li><a href="#home" onclick="navigate('home')">🏠 الرئيسية</a></li>
       <li><a href="#productsSection" onclick="scrollToSection('productsSection')">🛍️ المنتجات</a></li>
@@ -63,8 +63,8 @@
         <h1>تقنية تواكب <span class="accent">أسلوب حياتك</span></h1>
         <p>سماعات، ساعات ذكية، ومكبرات صوت مختارة بعناية — جودة عالية وتصميم يلفت الأنظار.</p>
         <div class="hero-actions">
-          <button class="btn btn-primary btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),10)">تسوق الآن</button>
-          <button class="btn btn-outline btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),10)">استكشف المنتجات</button>
+          <button class="btn btn-primary btn-lg" onclick="scrollToSection('productsSection')">تسوق الآن</button>
+          <button class="btn btn-outline btn-lg" onclick="scrollToSection('productsSection')">استكشف المنتجات</button>
         </div>
       </div>
     </section>
@@ -115,7 +115,7 @@
   <!-- ===== نجاح الطلب ===== -->
   <div class="view" id="view-success"></div>
 
-  <!-- ===== قسم طلباتي السابقة (بديل تتبع الطلب) ===== -->
+  <!-- ===== قسم طلباتي السابقة ===== -->
   <div class="view" id="view-myorders"></div>
 
 </main>
@@ -137,15 +137,15 @@
         <h4>روابط سريعة</h4>
         <ul>
           <li><a onclick="navigate('home')">الرئيسية</a></li>
-          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),80)">المنتجات</a></li>
-          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection')?.scrollIntoView({behavior:'smooth'}),80)">من نحن</a></li>
+          <li><a onclick="scrollToSection('productsSection')">المنتجات</a></li>
+          <li><a onclick="scrollToSection('aboutSection')">من نحن</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>خدمة العملاء</h4>
         <ul>
-          <li><a onclick="navigate('myorders')">طلباتي</a></li>
-          <li><a onclick="navigate('cart')">سلة التسوق</a></li>
+          <li><a onclick="navigate('myorders')">📦 طلباتي</a></li>
+          <li><a onclick="navigate('cart')">🛒 سلة التسوق</a></li>
         </ul>
       </div>
       <div class="footer-col">
