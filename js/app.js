@@ -264,10 +264,9 @@ function renderCheckoutView() {
 async function submitOrder(e) {
   e.preventDefault();
 
-  // منع أي تشغيل بالغلط من الأزرار الخارجية (مثل تسوق الآن)
-  const nameInput = document.getElementById("fName");
-  const phoneInput = document.getElementById("fPhone");
-  if (!nameInput || !phoneInput) return;
+  // منع أي تشغيل للدالة إذا لم يكن المستخدم في صفحة الدفع (مثل الضغط على زرار تسوق الآن)
+  const checkoutForm = document.getElementById("checkoutForm");
+  if (!checkoutForm) return;
 
   const fields = {
     fName: "يرجى إدخال الاسم",
@@ -431,7 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("footerFb").href = STORE_CONFIG.facebookUrl;
   document.getElementById("footerWa").href = STORE_CONFIG.whatsappUrl;
   document.getElementById("footerIg").href = STORE_CONFIG.instagramUrl;
-  document.getElementById("footerWa2").href = STORE_CONFIG.whatsappUrl;
+  document.getElementById("footerWa2").href, STORE_CONFIG.whatsappUrl;
 
   const { view, params } = parseHash();
   renderView(view, params);
