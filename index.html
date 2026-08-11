@@ -7,7 +7,7 @@
 <link rel="icon" href="assets/logo.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-<!-- مكتبة الأيقونات الحقيقية (FontAwesome) -->
+<!-- مكتبة الأيقونات (FontAwesome) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -22,16 +22,17 @@
     </div>
 
     <ul class="nav-links">
-  <li><a href="#home" onclick="navigate('home')">الرئيسية</a></li>
-  <li><a href="#productsGrid" onclick="document.getElementById('productsGrid')?.scrollIntoView({behavior: 'smooth'})">المنتجات</a></li>
-  <li><a href="#footer" onclick="document.querySelector('.site-footer')?.scrollIntoView({behavior: 'smooth'})">من نحن</a></li>
-  <li><a href="#myorders" onclick="navigate('myorders')">طلباتي</a></li>
-</ul>
+      <li><a href="#home" onclick="navigate('home')">الرئيسية</a></li>
+      <li><a href="#productsGrid" onclick="document.getElementById('productsGrid')?.scrollIntoView({behavior: 'smooth'})">المنتجات</a></li>
+      <li><a href="#aboutSection" onclick="document.getElementById('aboutSection')?.scrollIntoView({behavior: 'smooth'})">من نحن</a></li>
+      <li><a href="#myorders" onclick="navigate('myorders')">طلباتي</a></li>
+    </ul>
+
     <div class="header-actions">
       <a class="cart-btn" onclick="navigate('cart')">
         🛒<span class="cart-count" id="cartCount">0</span>
       </a>
-      <button class="btn btn-primary" onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">تسوق الآن</button>
+      <button class="btn btn-primary" onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),80)">تسوق الآن</button>
       <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
         <span></span><span></span><span></span>
       </div>
@@ -42,9 +43,9 @@
 <!-- ===== Mobile Menu ===== -->
 <div class="mobile-menu" id="mobileMenu">
   <a onclick="navigate('home')">الرئيسية</a>
-  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">المنتجات</a>
-  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'}),80)">من نحن</a>
-  <a onclick="navigate('tracking')">طلباتي</a>
+  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),80)">المنتجات</a>
+  <a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection')?.scrollIntoView({behavior:'smooth'}),80)">من نحن</a>
+  <a onclick="navigate('myorders')">طلباتي</a>
   <a onclick="navigate('cart')">سلة التسوق 🛒</a>
 </div>
 
@@ -60,8 +61,8 @@
         <h1>تقنية تواكب <span class="accent">أسلوب حياتك</span></h1>
         <p>سماعات، ساعات ذكية، ومكبرات صوت مختارة بعناية — جودة عالية وتصميم يلفت الأنظار.</p>
         <div class="hero-actions">
-          <button class="btn btn-primary btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),10)">تسوق الآن</button>
-          <button class="btn btn-outline btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),10)">استكشف المنتجات</button>
+          <button class="btn btn-primary btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),10)">تسوق الآن</button>
+          <button class="btn btn-outline btn-lg" onclick="setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),10)">استكشف المنتجات</button>
         </div>
       </div>
     </section>
@@ -112,35 +113,18 @@
   <!-- ===== نجاح الطلب ===== -->
   <div class="view" id="view-success"></div>
 
-  <!-- ===== تتبع الطلب ===== -->
-<div id="view-myorders" class="view"></div>
-    <div class="container tracking-view">
-      <h1 class="page-title" style="margin-top:20px;">تتبع طلبك</h1>
-      <form class="tracking-form fade-in" onsubmit="submitTracking(event)">
-        <div class="form-group">
-          <label>رقم الطلب</label>
-          <input type="text" id="trackOrderNumber" placeholder="مثال: QR-2026-58321">
-        </div>
-        <div class="form-group">
-          <label>رقم الهاتف</label>
-          <input type="tel" id="trackPhone" placeholder="رقم الهاتف المستخدم في الطلب">
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg full">تتبع الطلب</button>
-      </form>
-      <div id="trackingResult"></div>
-    </div>
-  </div>
+  <!-- ===== قسم طلباتي السابقة (بديل تتبع الطلب) ===== -->
+  <div class="view" id="view-myorders"></div>
 
 </main>
 
 <!-- ===== Footer ===== -->
-<footer class="site-footer">
+<footer class="site-footer" id="siteFooter">
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
         <img src="assets/logo.jpg" alt="WT Store">
         <p>وجهتك لأحدث الإكسسوارات التقنية بجودة عالية وتجربة شراء سهلة وموثوقة.</p>
-        <!-- الأيقونات الحقيقية -->
         <div class="social-icons" style="display: flex; gap: 15px; margin-top: 15px;">
           <a id="footerFb" href="#" target="_blank" aria-label="Facebook" style="color: #fff; font-size: 20px;"><i class="fab fa-facebook-f"></i></a>
           <a id="footerWa" href="#" target="_blank" aria-label="WhatsApp" style="color: #fff; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
@@ -151,14 +135,14 @@
         <h4>روابط سريعة</h4>
         <ul>
           <li><a onclick="navigate('home')">الرئيسية</a></li>
-          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection').scrollIntoView({behavior:'smooth'}),80)">المنتجات</a></li>
-          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'}),80)">من نحن</a></li>
+          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('productsSection')?.scrollIntoView({behavior:'smooth'}),80)">المنتجات</a></li>
+          <li><a onclick="navigate('home'); setTimeout(()=>document.getElementById('aboutSection')?.scrollIntoView({behavior:'smooth'}),80)">من نحن</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>خدمة العملاء</h4>
         <ul>
-          <li><a onclick="navigate('tracking')">تتبع الطلب</a></li>
+          <li><a onclick="navigate('myorders')">طلباتي</a></li>
           <li><a onclick="navigate('cart')">سلة التسوق</a></li>
         </ul>
       </div>
@@ -175,7 +159,7 @@
   </div>
 </footer>
 
-<!-- ===== أيقونة الواتساب العائمة المتحركة ===== -->
+<!-- ===== أيقونة الواتساب العائمة ===== -->
 <div id="floating-whatsapp" style="position: fixed; bottom: 25px; left: 25px; z-index: 9999;">
   <a href="https://wa.me/201000000000" target="_blank" aria-label="تواصل عبر واتساب" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background-color: #25d366; color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 32px; text-decoration: none; animation: pulse-whatsapp 2s infinite;">
     <i class="fab fa-whatsapp"></i>
@@ -196,7 +180,6 @@
 <script src="js/config.js"></script>
 <script src="js/products.js"></script>
 <script src="js/cart.js"></script>
-<script src="js/tracking.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
