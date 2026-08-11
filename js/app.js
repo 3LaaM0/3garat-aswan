@@ -288,7 +288,7 @@ async function submitOrder(e) {
   if (!valid) return;
 
   const items = Cart.detailedItems();
-  const orderNumber = Orders.generateOrderNumber();
+  const orderNumber = "QR-" + Math.floor(100000 + Math.random() * 900000);
   const itemsText = items.map(i => `• ${i.name} (×${i.qty}) - ${i.price * i.qty} ${STORE_CONFIG.currency}`).join("\n");
 
   const order = {
@@ -342,8 +342,16 @@ ${itemsText}
     console.error('خطأ في إرسال تليجرام:', error);
   }
 
-  Orders.save(order);
-  Orders.sendToAutomation(order);
+  // تخطي أي كائن Orders قديم لمنع الأخطاء وحفظ الطلب محلياً
+  try {
+    if (typeof Orders !== 'undefined' && Orders.save) {
+      Orders.save(order);
+      if (Orders.sendToAutomation) Orders.sendToAutomation(order);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
   Cart.clear();
   window._lastOrder = order;
   navigate("success");
