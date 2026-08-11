@@ -656,3 +656,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const { view, params } = parseHash();
   renderView(view, params);
 });
+// دالة النزول المباشر والسلس للأقسام بدون خربطة
+function scrollToSection(sectionId) {
+  closeMobileMenu();
+  const homeView = document.getElementById("view-home");
+  
+  // التأكد من فتح الرئيسية أولاً إذا كان الزبون في صفحة ثانية
+  if (homeView && !homeView.classList.contains("active")) {
+    document.querySelectorAll(".view").forEach(v => {
+      v.classList.remove("active");
+      v.style.display = "none";
+    });
+    homeView.classList.add("active");
+    homeView.style.display = "block";
+  }
+
+  // السكرول الناعم للقسم المطلوب
+  setTimeout(() => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 50);
+}
