@@ -78,6 +78,7 @@
     .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
     .btn-cancel { background: #f1f5f9; color: var(--text-muted); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
+    /* التحكم في إخفاء وإظهار الأقسام */
     .admin-section { display: none; }
     .admin-section.active { display: block; }
   </style>
@@ -90,9 +91,9 @@
       <i class="fa-solid fa-store" style="color: var(--primary);"></i>
       <span>WT Store</span>
     </div>
-    <div class="nav-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> الرئيسية</div>
-    <div class="nav-item" onclick="switchTab('products')"><i class="fa-solid fa-box"></i> المنتجات</div>
-    <div class="nav-item" onclick="switchTab('orders')"><i class="fa-solid fa-cart-shopping"></i> الطلبات</div>
+    <div class="nav-item active" id="btn-dashboard" onclick="showAdminTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> الرئيسية</div>
+    <div class="nav-item" id="btn-products" onclick="showAdminTab('products')"><i class="fa-solid fa-box"></i> المنتجات</div>
+    <div class="nav-item" id="btn-orders" onclick="showAdminTab('orders')"><i class="fa-solid fa-cart-shopping"></i> الطلبات</div>
     <a href="index.html" class="nav-item" style="margin-top: auto; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> العودة للمتجر</a>
   </aside>
 
@@ -231,6 +232,37 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // دالة تبديل الأقسام مباشرة ومضمونة
+    function showAdminTab(tabName) {
+      document.querySelectorAll('.admin-section').forEach(sec => {
+        sec.style.display = 'none';
+        sec.classList.remove('active');
+      });
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      const activeSec = document.getElementById('tab-' + tabName);
+      if (activeSec) {
+        activeSec.style.display = 'block';
+        activeSec.classList.add('active');
+      }
+
+      const activeBtn = document.getElementById('btn-' + tabName);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+      }
+
+      const titles = {
+        dashboard: "نظرة عامة على المتجر",
+        products: "إدارة المنتجات",
+        orders: "إدارة الطلبات"
+      };
+      document.getElementById('pageTitle').textContent = titles[tabName] || "لوحة التحكم";
+    }
+  </script>
 
   <script src="js/products.js"></script>
   <script src="js/admin.js"></script>
