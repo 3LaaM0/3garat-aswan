@@ -377,11 +377,11 @@ function renderSuccessView(order) {
         <div class="summary-row"><span>الحالة</span><span class="status-badge">بانتظار التأكيد</span></div>
       </div>
       <div class="success-actions">
-        <button class="btn btn-whatsapp btn-lg" onclick="openWhatsAppOrder(window._lastOrder)">إرسال الطلب عبر واتساب</button>
-        <button class="btn btn-outline btn-lg" onclick="navigate('tracking')">تتبع الطلب</button>
+        <button class="btn btn-primary btn-lg" onclick="navigate('tracking')">تتبع الطلب</button>
         <button class="btn btn-text" onclick="navigate('home')">العودة للرئيسية</button>
       </div>
     </div>`;
+}
 }
 
 // ---------- تتبع الطلب ----------
