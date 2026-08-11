@@ -1,4 +1,3 @@
-// كود إرسال الطلب من موقع WT Store مباشرة إلى تليجرام
 document.addEventListener('DOMContentLoaded', () => {
     const checkoutButton = document.querySelector('button, .checkout-btn'); // زر تأكيد الطلب
 
@@ -6,32 +5,30 @@ document.addEventListener('DOMContentLoaded', () => {
         checkoutButton.addEventListener('click', async function (e) {
             e.preventDefault(); // منع إعادة تحميل الصفحة
 
-            // 1. جلب البيانات من الحقول الموجودة في الصفحة عندك
-            const fullName = document.querySelector('input[placeholder*="أحمد محمد"]')?.value || '';
-            const phone = document.querySelector('input[placeholder="01xxxxxxxxxx"]')?.value || '';
-            const whatsappInputs = document.querySelectorAll('input[placeholder="01xxxxxxxxxx"]');
-            const whatsapp = whatsappInputs.length > 1 ? whatsappInputs[1].value : phone;
-            const city = document.querySelector('input[placeholder*="القاهرة"]')?.value || '';
-            const address = document.querySelector('textarea[placeholder*="اسم الشارع"]')?.value || '';
-            const notes = document.querySelector('textarea[placeholder*="أي تفاصيل إضافية"]')?.value || '';
+            // 1. جلب البيانات من الحقول الموجودة في الصفحة
+            const fullName = document.querySelector('input[placeholder*="أحمد محمد"]')?.value || document.querySelector('input[id*="name"]')?.value || 'غير محدد';
+            const phone = document.querySelector('input[placeholder="01xxxxxxxxxx"]')?.value || 'غير محدد';
+            
+            // جلب بقية البيانات الموجودة عندك في الصفحة
+            const city = document.querySelector('input[placeholder*="القاهرة"]')?.value || 'غير محددة';
+            const address = document.querySelector('textarea[placeholder*="اسم الشارع"]')?.value || 'غير محدد';
+            const notes = document.querySelector('textarea[placeholder*="أي تفاصيل إضافية"]')?.value || 'لا يوجد';
 
-            // 2. بيانات البوت الخاص بك (ضع بياناتك هنا)
+            // 2. بيانات بوت التليجرام الخاص بك
             const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw'; 
             const chatId = '5535861156'; 
 
-            // 3. تنسيق رسالة التليجرام
-            const message = `
-🔔 طلب جديد من متجر WT Store!
+            // 3. تنسيق نص الرسالة بشكل جميل ونظيف (بدون مشاكل ترميز)
+            const message = 
+`🔔 طلب جديد من متجر WT Store!
 
 👤 الاسم: ${fullName}
 📞 الهاتف: ${phone}
-💬 واتساب: ${whatsapp}
 📍 المحافظة / المدينة: ${city}
 🏠 العنوان: ${address}
-📝 ملاحظات: ${notes || 'لا يوجد'}
-            `.trim();
+📝 ملاحظات: ${notes}`;
 
-            // 4. إرسال الطلب لـ Telegram API
+            // 4. إرسال الطلب لسيرفرات تليجرام مباشرة
             const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
             try {
@@ -49,14 +46,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const data = await response.json();
                 if (data.ok) {
-                    alert('تم تأكيد طلبك بنجاح! سيتم التواصل معك قريباً.');
-                    // ممكن تفريغ السلة أو إعادة توجيه الصفحة هنا لو تحب
+                    alert('تم تأكيد طلبك بنجاح! وتبيانات الطلب وصلت على التليجرام.');
+                    // لو حابب تحوله لصفحة النجاح بعد الإرسال
+                    // window.location.href = 'success.html';
                 } else {
-                    alert('حدث خطأ أثناء إرسال الطلب، تأكد من البيانات.');
+                    alert('حدث خطأ أثناء إرسال الطلب، تأكد من الاتصال بالإنترنت.');
                 }
             } catch (error) {
                 console.error('خطأ في الاتصال:', error);
-                alert('فشل الاتصال، تحقق من شبكة الإنترنت.');
+                alert('فشل الاتصال بالخادم.');
             }
         });
     }
