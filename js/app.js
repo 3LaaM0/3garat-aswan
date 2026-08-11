@@ -569,3 +569,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const { view, params } = parseHash();
   renderView(view, params);
 });
+function toggleStoreTheme() {
+  const body = document.body;
+  const btn = document.getElementById('storeThemeBtn');
+  
+  if (body.classList.contains('light-store-mode')) {
+    body.classList.remove('light-store-mode');
+    if(btn) btn.textContent = '🌙 الوضع الليلي';
+    localStorage.setItem('wt_store_theme', 'dark');
+  } else {
+    body.classList.add('light-store-mode');
+    if(btn) btn.textContent = '☀️ الوضع النهاري';
+    localStorage.setItem('wt_store_theme', 'light');
+  }
+}
+
+// تحميل الثيم المحفوظ عند فتح الموقع
+document.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('wt_store_theme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-store-mode');
+    const btn = document.getElementById('storeThemeBtn');
+    if(btn) btn.textContent = '☀️ الوضع النهاري';
+  }
+});
