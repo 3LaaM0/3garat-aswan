@@ -12,7 +12,7 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
-// حقن تنسيقات شبكة المنتجات
+// حقن أنيميشن وتنسيقات شبكة المنتجات
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
@@ -87,6 +87,7 @@ function executeViewRender(view, params) {
 }
 
 let cloudProducts = [];
+let cloudOrders = [];
 
 function initCloudProducts() {
   if (typeof firebase !== 'undefined') {
@@ -103,6 +104,8 @@ function initCloudProducts() {
     }
 
     const db = firebase.firestore();
+    
+    // جلب المنتجات حياً من السحابة
     db.collection("products").onSnapshot((snapshot) => {
       cloudProducts = [];
       snapshot.forEach((doc) => {
@@ -116,6 +119,17 @@ function initCloudProducts() {
       if (view === "product" && params.id) renderProductDetails(params.id);
     }, (error) => {
       console.error("خطأ في جلب المنتجات السحابية:", error);
+    });
+
+    // جلب الطلبات حياً لتحديث حالات الطلبات للعميل فوراً عند تغييرها من الأدمن
+    db.collection("orders").onSnapshot((snapshot) => {
+      cloudOrders = [];
+      snapshot.forEach((doc) => {
+        cloudOrders.push({ docId: doc.id, ...doc.data() });
+      });
+
+      const { view } = parseHash();
+      if (view === "myorders") renderMyOrdersView();
     });
   }
 }
@@ -173,6 +187,7 @@ function renderProductGrid(selectedCategory = 'الكل') {
     const imgSrc = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'assets/logo.jpg');
     const stock = p.stock !== undefined ? parseInt(p.stock) : 10;
     const isOut = stock <= 0;
+    const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
 
     const btnHtml = isOut
       ? `<button class="btn" disabled style="background:#444; color:#aaa; cursor:not-allowed; flex:1;">نفد المخزون ❌</button>`
@@ -187,8 +202,8 @@ function renderProductGrid(selectedCategory = 'الكل') {
           <h3 class="product-name" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">${p.name}</h3>
           <p class="product-desc">${p.shortDesc || ''}</p>
           <div class="product-price-row">
-            <span class="price">${p.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
-            <span class="old-price">${p.oldPrice ? p.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
+            <span class="price">${p.price} ${currency}</span>
+            <span class="old-price">${p.oldPrice ? p.oldPrice + ' ' + currency : ''}</span>
           </div>
           <div class="product-actions">
             <button class="btn btn-outline" onclick="navigate('product', {id: ${p.id}})" style="flex:1;">التفاصيل</button>
@@ -206,6 +221,7 @@ function quickAddToCart(id, e) {
   showToast("تمت إضافة المنتج إلى السلة بنجاح 🛍️");
 }
 
+// ---------- صفحة تفاصيل المنتج (تم تصحيح الخطأ الإملائي فيها) ----------
 function renderProductDetails(id) {
   const productsList = getActiveProducts();
   const el = document.getElementById("view-product");
@@ -226,6 +242,7 @@ function renderProductDetails(id) {
   
   const stock = product.stock !== undefined ? parseInt(product.stock) : 10;
   const isOut = stock <= 0;
+  const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
 
   const actionsHtml = isOut
     ? `<button class="btn btn-lg full" disabled style="background:#444; color:#aaa; cursor:not-allowed; border:none;">عذراً، نفد المخزون ❌</button>`
@@ -257,8 +274,8 @@ function renderProductDetails(id) {
           </div>
 
           <div class="product-price-row large">
-            <span class="price">${product.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
-            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
+            <span class="price">${product.price} ${currency}</span>
+            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + currency : ''}</span>
           </div>
 
           <p class="details-desc">${product.description || product.shortDesc || ''}</p>
@@ -312,6 +329,7 @@ function renderCartView() {
   if (!el) return;
 
   const items = Cart.detailedItems();
+  const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
 
   if (!items || items.length === 0) {
     el.innerHTML = `
@@ -333,14 +351,14 @@ function renderCartView() {
         <img src="${imgSrc}" alt="${i.name}" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.src='assets/logo.jpg'">
         <div class="cart-row-info" style="flex: 1; padding: 0 15px; text-align: right;">
           <h4 style="margin: 0 0 5px; color: var(--text-main);">${i.name}</h4>
-          <span class="price" style="color: #10b981; font-weight: bold;">${i.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
+          <span class="price" style="color: #10b981; font-weight: bold;">${i.price} ${currency}</span>
         </div>
         <div class="cart-qty" style="display: flex; align-items: center; gap: 10px;">
           <button onclick="Cart.decrease(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px;">−</button>
           <span>${i.qty}</span>
           <button onclick="Cart.increase(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px;">+</button>
         </div>
-        <div class="cart-row-total" style="font-weight: bold; padding: 0 15px;">${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}</div>
+        <div class="cart-row-total" style="font-weight: bold; padding: 0 15px;">${i.price * i.qty} ${currency}</div>
         <button class="remove-btn" onclick="Cart.remove(${i.id}); renderCartView(); Cart.updateCounter();" style="background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer;">✕</button>
       </div>
     `;
@@ -353,7 +371,7 @@ function renderCartView() {
         <div class="cart-items">${rows}</div>
         <div class="cart-summary" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border);">
           <h3>ملخص الطلب</h3>
-          <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
+          <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${currency}</span></div>
           <button class="btn btn-primary full" onclick="navigate('checkout')" style="width: 100%; margin-top: 15px; padding: 12px;">إتمام الطلب</button>
         </div>
       </div>
@@ -457,24 +475,70 @@ function renderSuccessView(order) {
     </div>`;
 }
 
+// ---------- قسم "طلباتي" (تمت إعادتها كاملة بالتفاصيل وتزامن السحابة) ----------
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
-  const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+
+  let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
+
   if (savedOrders.length === 0) {
-    el.innerHTML = `<div class="container" style="text-align:center; padding:50px;"><p>لا توجد طلبات سابقة</p></div>`;
+    el.innerHTML = `
+      <div class="container" style="text-align: center; padding: 60px 20px;">
+        <h1 class="page-title">📦 طلباتي السابقة</h1>
+        <div class="empty-state">
+          <div class="empty-icon" style="font-size: 50px; margin-bottom: 15px;">📭</div>
+          <p style="color: var(--text-muted); font-size: 18px;">لا توجد أي طلبات مسجلة من هذا المتصفح حتى الآن.</p>
+          <button class="btn btn-primary" onclick="navigate('products')" style="margin-top: 20px;">تسوق الآن</button>
+        </div>
+      </div>
+    `;
     return;
   }
-  el.innerHTML = `
-    <div class="container" style="max-width:800px; padding:20px;">
-      <h1 class="page-title" style="text-align:center;">📦 طلباتي السابقة</h1>
-      ${savedOrders.map(o => `
-        <div style="background:var(--bg-card); padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid var(--border);">
-          <h3>رقم الطلب: ${o.orderNumber}</h3>
-          <p>الإجمالي: ${o.total} ج.م</p>
+
+  // مزامنة حالة الطلبات من Firebase لو الأدمن غيرها في السحابة
+  savedOrders = savedOrders.map(localOrder => {
+    const cloudMatch = cloudOrders.find(co => co.orderNumber === localOrder.orderNumber);
+    if (cloudMatch && cloudMatch.status) {
+      localOrder.status = cloudMatch.status;
+    }
+    return localOrder;
+  });
+
+  const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
+
+  let ordersHtml = savedOrders.slice().reverse().map(order => {
+    const status = order.status || "بانتظار التأكيد";
+    let statusColor = "#f59e0b"; // برتقالي
+    let statusBg = "rgba(245, 158, 11, 0.1)";
+
+    if (status === "جاري التجهيز") { statusColor = "#2563eb"; statusBg = "rgba(37, 99, 235, 0.1)"; }
+    else if (status === "في طريقها للتوصيل" || status === "في الطريق") { statusColor = "#a855f7"; statusBg = "rgba(168, 85, 247, 0.1)"; }
+    else if (status === "تم التسليم" || status === "مكتمل") { statusColor = "#10b981"; statusBg = "rgba(16, 185, 129, 0.1)"; }
+    else if (status === "ملغى") { statusColor = "#ef4444"; statusBg = "rgba(239, 68, 68, 0.1)"; }
+
+    return `
+      <div class="success-card" style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: right; border: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+          <h3 style="margin: 0; color: var(--text-main); font-size: 18px;">رقم الطلب: ${order.orderNumber}</h3>
+          <span style="background: ${statusBg}; color: ${statusColor}; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 1px solid ${statusColor}33;">${status}</span>
         </div>
-      `).join('')}
-    </div>`;
+        <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px; color:var(--text-muted);"><span>اسم العميل:</span><span style="color:var(--text-main); font-weight:600;">${order.name || '-'}</span></div>
+        <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px; color:var(--text-muted);"><span>الهاتف:</span><span style="color:var(--text-main); font-weight:600;">${order.phone || '-'}</span></div>
+        <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px; color:var(--text-muted);"><span>طريقة الدفع:</span><span style="color:var(--text-main); font-weight:600;">${order.paymentMethod || 'الدفع عند الاستلام'}</span></div>
+        <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px; color:var(--text-muted);"><span>العنوان:</span><span style="color:var(--text-main); font-weight:600;">${order.province || ''} ${order.city ? '- ' + order.city : ''} ${order.address ? '- ' + order.address : ''}</span></div>
+        <div class="summary-row" style="display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); font-size:16px; font-weight:bold; color:var(--text-main);"><span>الإجمالي:</span><span style="color: #10b981;">${order.total} ${currency}</span></div>
+        <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted);">تاريخ الطلب: ${order.date || ''}</div>
+      </div>
+    `;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="container" style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
+      <h1 class="page-title" style="text-align: center; margin-bottom: 30px;">📦 طلباتي السابقة</h1>
+      ${ordersHtml}
+    </div>
+  `;
 }
 
 function showToast(message) {
