@@ -2,10 +2,10 @@
 // التطبيق الرئيسي - متجر WT Store الاحترافي
 // ============================================
 
-// تنظيف أية منتجات قديمة محفوضة في الذاكرة المحلية
+// تنظيف أية منتجات قديمة مخزنة في الذاكرة المحلية
 localStorage.removeItem('wt_custom_products');
 
-// شرط التحقق الصارم من الأرقام المصرية (11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015)
+// شرط التحقق الصارم من الأرقام المصرية (11 رقم يبدأ بـ 01)
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
 const EGYPT_GOVERNORATES = [
@@ -82,7 +82,6 @@ function renderView(view, params) {
   executeViewRender(view, params);
 }
 
-// تنفيذ رندر الصفحة المحددة (تم إصلاح استدعاء صفحة النجاح هنا)
 function executeViewRender(view, params) {
   if (view === "products") renderProductGrid(window._currentCat || 'الكل');
   if (view === "product") renderProductDetails(params.id);
@@ -416,7 +415,6 @@ function renderCartView() {
     </div>`;
 }
 
-// ---------- صفحة الدفع والتشيك أوت ----------
 function renderCheckoutView() {
   const el = document.getElementById("view-checkout");
   if (!el) return;
@@ -473,6 +471,10 @@ function renderCheckoutView() {
               <option value="إنستا باي (InstaPay)">إنستا باي (InstaPay)</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>ملاحظات إضافية (اختياري)</label>
+            <textarea id="fNotes" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
+          </div>
           <button type="button" id="confirmOrderBtn" class="btn btn-primary full" style="margin-top: 15px;">تأكيد الطلب</button>
         </form>
         <div class="cart-summary">
@@ -486,7 +488,6 @@ function renderCheckoutView() {
     const btn = document.getElementById("confirmOrderBtn");
     if (btn) btn.onclick = executeOrderSubmission;
 
-    // تصفية المدخلات لتكون أرقاماً فقط للواتساب والهاتف
     ["fPhone", "fWhatsapp"].forEach(id => {
       const input = document.getElementById(id);
       if (input) {
@@ -498,7 +499,7 @@ function renderCheckoutView() {
   }, 100);
 }
 
-// تنفيذ تأكيد الطلب وفحص الأرقام المصرية بصرامة
+// تنفيذ تأكيد الطلب مع إرسال إشعار تليجرام المباشر وإعادة توجيه ناجحة
 async function executeOrderSubmission(e) {
   if (e) e.preventDefault();
 
@@ -527,7 +528,6 @@ async function executeOrderSubmission(e) {
     }
   }
 
-  // فحص صارم للأرقام المصرية (يجب أن تكون 11 رقماً وتبدأ بـ 01)
   ["fPhone", "fWhatsapp"].forEach(id => {
     const errEl = document.getElementById(`err-${id}`);
     if (values[id] && !EGY_PHONE_REGEX.test(values[id])) {
@@ -539,9 +539,17 @@ async function executeOrderSubmission(e) {
   if (!valid) return;
 
   const paymentMethod = document.getElementById("fPaymentMethod") ? document.getElementById("fPaymentMethod").value : "الدفع عند الاستلام";
+  const items = Cart.detailedItems();
+  const subtotal = Cart.total();
+  const discountVal = window._appliedPromo ? window._appliedPromo.value : 0;
+  const finalTotal = Math.max(0, subtotal - discountVal);
+  const orderNumber = "QR-" + Math.floor(100000 + Math.random() * 900000);
+  const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
+
+  const itemsText = items.map(i => `• ${i.name} (×${i.qty}) - ${i.price * i.qty} ${currency}`).join("\n");
 
   const order = {
-    orderNumber: "QR-" + Math.floor(100000 + Math.random() * 900000),
+    orderNumber: orderNumber,
     name: values.fName,
     phone: values.fPhone,
     whatsapp: values.fWhatsapp,
@@ -549,27 +557,87 @@ async function executeOrderSubmission(e) {
     city: values.fCity,
     address: values.fAddress,
     paymentMethod: paymentMethod,
-    total: Cart.total(),
-    items: Cart.detailedItems(),
+    promoCode: window._appliedPromo ? window._appliedPromo.code : null,
+    discount: discountVal,
+    subtotal: subtotal,
+    total: finalTotal,
+    notes: document.getElementById("fNotes") ? document.getElementById("fNotes").value.trim() : '',
+    items: items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
     date: new Date().toLocaleDateString("ar-EG"),
     status: "بانتظار التأكيد",
     createdAt: Date.now()
   };
 
+  // 1. الحفظ في سحابة Firebase
   if (typeof firebase !== 'undefined') {
-    try { await firebase.firestore().collection("orders").add(order); } catch (err) { console.error("خطأ رفع الطلب للسحابة:", err); }
+    try {
+      const db = firebase.firestore();
+      await db.collection("orders").add(order);
+
+      // خصم الكميات من المخزون
+      for (const item of order.items) {
+        const pRef = await db.collection("products").where("id", "==", item.id).get();
+        if (!pRef.empty) {
+          const doc = pRef.docs[0];
+          const currStock = parseInt(doc.data().stock) || 0;
+          await db.collection("products").doc(doc.id).update({
+            stock: Math.max(0, currStock - item.qty)
+          });
+        }
+      }
+    } catch (err) {
+      console.error("خطأ في رفع الطلب للسحابة:", err);
+    }
   }
 
+  // 2. الحفظ المحلي للعميل
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
   savedOrders.push(order);
   localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
+
+  // 3. إرسال الإشعار الفوري للبوت عبر تليجرام
+  const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
+  const chatId = '5535861156';
+  const promoText = window._appliedPromo ? `\n🎟️ كود الخصم: ${window._appliedPromo.code} (خصم ${discountVal} ${currency})` : '';
+
+  const telegramMessage = `
+🔔 طلب جديد من متجر WT Store!
+
+🔖 رقم الطلب: ${orderNumber}
+👤 الاسم: ${values.fName}
+📞 الهاتف: ${values.fPhone}
+💬 واتساب: ${values.fWhatsapp}
+📍 المحافظة: ${values.fProvince}
+🏙️ المدينة: ${values.fCity}
+🏠 العنوان: ${values.fAddress}
+💳 طريقة الدفع: ${paymentMethod}${promoText}
+📝 ملاحظات: ${order.notes || 'لا يوجد'}
+
+🛒 تفاصيل المنتجات:
+${itemsText}
+
+💰 الإجمالي النهائي: ${finalTotal} ${currency}
+  `.trim();
+
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: telegramMessage,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch (error) {
+    console.error('خطأ في إرسال تليجرام:', error);
+  }
 
   Cart.clear();
   window._lastOrder = order;
   navigate("success");
 }
 
-// ---------- صفحة نجاح الطلب (تمت معالجة وعرض البيانات كاملاً) ----------
 function renderSuccessView(order) {
   order = order || window._lastOrder;
   const el = document.getElementById("view-success");
@@ -616,7 +684,6 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- قسم طلباتي ----------
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
