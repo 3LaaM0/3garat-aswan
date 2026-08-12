@@ -155,7 +155,7 @@
     </div>
   </div>
 
-  <!-- لوحة التحكم الكاملة (مخفية لحين تسجيل الدخول) -->
+  <!-- لوحة التحكم الكاملة -->
   <div id="adminMainContainer" style="display: none; width: 100%; min-height: 100vh; display: flex;">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -264,8 +264,9 @@
               <tr>
                 <th>الصورة</th>
                 <th>اسم المنتج</th>
+                <th>القسم</th>
                 <th>السعر الحالي</th>
-                <th>المخزون (الكمية)</th>
+                <th>المخزون</th>
                 <th>الإجراءات</th>
               </tr>
             </thead>
@@ -328,6 +329,15 @@
         <label>اسم المنتج</label>
         <input type="text" id="newProdName" placeholder="مثال: سماعة بلوتوث">
       </div>
+      <div class="form-group">
+        <label>قسم المنتج</label>
+        <select id="newProdCategory">
+          <option value="سماعات">سماعات</option>
+          <option value="شواحن">شواحن</option>
+          <option value="وصلات">وصلات</option>
+          <option value="أخرى">أخرى</option>
+        </select>
+      </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
         <div class="form-group">
           <label>السعر الحالي (ج.م)</label>
@@ -359,7 +369,6 @@
   </div>
 
   <script>
-    // نظام تسجيل الدخول والحماية
     function attemptLogin() {
       const user = document.getElementById('usernameInput').value.trim();
       const pass = document.getElementById('passwordInput').value.trim();
@@ -380,7 +389,6 @@
       location.reload();
     }
 
-    // التحقق عند تحميل الصفحة
     document.addEventListener("DOMContentLoaded", () => {
       if (sessionStorage.getItem('wt_admin_logged') === 'true') {
         document.getElementById('loginScreen').style.display = 'none';
@@ -389,7 +397,6 @@
       }
     });
 
-    // إعدادات الاتصال بـ Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBgiUuOxa9JKG3lTonpl8uYPaJBlUSisAU",
       authDomain: "wt-store-a71af-3c9a7.firebaseapp.com",
@@ -409,7 +416,6 @@
     let adminCloudProducts = [];
 
     function initAdminPage() {
-      // الاستماع للمنتجات
       db.collection("products").onSnapshot((snapshot) => {
         adminCloudProducts = [];
         snapshot.forEach((doc) => {
@@ -419,7 +425,6 @@
         updateStats();
       });
 
-      // الاستماع للطلبات
       db.collection("orders").onSnapshot((snapshot) => {
         cloudOrders = [];
         snapshot.forEach((doc) => {
@@ -429,7 +434,6 @@
         updateStats();
       });
 
-      // الاستماع لأكواد الخصم
       db.collection("promo_codes").onSnapshot(snap => {
         const tbody = document.getElementById('promoTable');
         if (!tbody) return;
@@ -451,7 +455,6 @@
       });
     }
 
-    // الإحصائيات الحية
     function updateStats() {
       document.getElementById('statTotalProducts').textContent = adminCloudProducts.length;
       
@@ -463,7 +466,6 @@
       });
       document.getElementById('statOutOfStock').textContent = outOfStock;
       document.getElementById('statLowStock').textContent = lowStock;
-
       document.getElementById('statTotalOrders').textContent = cloudOrders.length;
 
       let totalSales = 0, todaySales = 0, monthSales = 0;
@@ -496,7 +498,6 @@
       document.getElementById('statTotalCustomers').textContent = customersSet.size;
     }
 
-    // التعامل مع رفع عدة صور
     function handleImagesUpload(event) {
       const files = event.target.files;
       const preview = document.getElementById('previewContainer');
@@ -522,13 +523,14 @@
       const tbody = document.getElementById('adminProductsTable');
       if (!tbody) return;
       if (adminCloudProducts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد منتجات معروضة.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد منتجات معروضة.</td></tr>`;
         return;
       }
       tbody.innerHTML = adminCloudProducts.map((p) => `
         <tr>
           <td><img src="${(p.images && p.images.length > 0) ? p.images[0] : p.image}" class="prod-img" onerror="this.src='assets/logo.jpg'"></td>
           <td><b>${p.name}</b></td>
+          <td><span style="background:var(--bg-body); padding:4px 8px; border-radius:6px; font-size:12px;">${p.category || 'أخرى'}</span></td>
           <td><b style="color:var(--accent-green)">${p.price} ج.م</b></td>
           <td>
             <div style="display:flex; align-items:center; gap:8px;">
@@ -568,6 +570,7 @@
 
     async function saveNewProduct() {
       const name = document.getElementById('newProdName').value.trim();
+      const category = document.getElementById('newProdCategory').value;
       const price = document.getElementById('newProdPrice').value.trim();
       const oldPrice = document.getElementById('newProdOldPrice').value.trim();
       const stock = document.getElementById('newProdStock').value.trim();
@@ -580,6 +583,7 @@
       const newProd = {
         id: Date.now(),
         name: name,
+        category: category,
         price: parseInt(price, 10),
         oldPrice: oldPrice ? parseInt(oldPrice, 10) : parseInt(price, 10) + 200,
         stock: parseInt(stock, 10) || 0,
@@ -601,7 +605,6 @@
       } catch (err) { console.error("خطأ:", err); }
     }
 
-    // إدارة أكواد الخصم
     async function addNewPromo() {
       const code = prompt("أدخل كود الخصم (مثال: WT20)");
       const value = prompt("أدخل قيمة الخصم بالجنيه (مثال: 50)");
@@ -668,7 +671,6 @@
       
       const titles = { dashboard: "نظرة عامة على المتجر", products: "إدارة المنتجات والمخزون", orders: "إدارة الطلبات", promo: "إدارة أكواد الخصم" };
       document.getElementById('pageTitle').textContent = titles[tabName] || "لوحة التحكم";
-
       document.getElementById('main-stats-grid').style.display = (tabName === 'dashboard') ? 'grid' : 'none';
     }
 
