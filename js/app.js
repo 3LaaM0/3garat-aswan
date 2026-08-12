@@ -120,13 +120,15 @@ function initCloudProducts() {
   }
 }
 
+// تحديث إحصائيات وعداد المنتجات حياً
 function updateProductCounts() {
-  const count = cloudProducts.length;
+  const allProds = getActiveProducts();
+  const count = allProds.length;
   const countText = document.getElementById('productsCountText');
   const aboutCount = document.getElementById('aboutProductsCount');
 
   if (countText) countText.textContent = `يتوفر لدينا الآن ${count} منتج أصلية ومضمونة`;
-  if (aboutCount) aboutCount.textContent = count + "+";
+  if (aboutCount) aboutCount.textContent = count;
 }
 
 function getActiveProducts() {
@@ -134,7 +136,7 @@ function getActiveProducts() {
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
 
-// دالة فتح قسم معين مباشرة من الصفحة الرئيسية
+// دالة فتح قسم معين مباشرة من الرئيسية
 window.openCategory = function(cat) {
   window._currentCat = cat;
   navigate('products');
@@ -256,7 +258,7 @@ function renderProductDetails(id) {
 
           <div class="product-price-row large">
             <span class="price">${product.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
-            <span class="old-price">${product.oldPrice ? p.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
+            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
           </div>
 
           <p class="details-desc">${product.description || product.shortDesc || ''}</p>
@@ -506,6 +508,7 @@ window.addEventListener("hashchange", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   initCloudProducts(); 
+  updateProductCounts();
   if (typeof Cart !== "undefined" && Cart.updateCounter) Cart.updateCounter();
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
