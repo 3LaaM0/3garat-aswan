@@ -23,6 +23,7 @@
       --border: #e2e8f0;
       --accent-green: #10b981;
       --danger: #ef4444;
+      --warning: #f59e0b;
       --radius: 12px;
     }
 
@@ -54,27 +55,28 @@
     .user-badge { display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 8px 16px; border-radius: 99px; border: 1px solid var(--border); font-weight: 700; font-size: 14px; }
 
     /* Stats Grid */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .stat-card { background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .stat-info span { font-size: 13px; color: var(--text-muted); font-weight: 600; }
-    .stat-info h2 { font-size: 22px; font-weight: 800; margin-top: 4px; }
-    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: var(--bg-card); padding: 15px 20px; border-radius: var(--radius); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .stat-info span { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+    .stat-info h2 { font-size: 20px; font-weight: 800; margin-top: 4px; }
+    .stat-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
     .icon-blue { background: rgba(37, 99, 235, 0.1); color: var(--primary); }
     .icon-green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
-    .icon-orange { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+    .icon-orange { background: rgba(249, 115, 22, 0.1); color: var(--warning); }
+    .icon-red { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
     .icon-purple { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
 
-    /* Tables */
-    .panel-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; }
+    /* Tables & Panels */
+    .panel-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; overflow-x: auto; }
     .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .panel-header h3 { font-size: 18px; font-weight: 800; }
     .btn-add { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
     .btn-add:hover { opacity: 0.9; }
 
-    table { width: 100%; border-collapse: collapse; text-align: right; }
+    table { width: 100%; border-collapse: collapse; text-align: right; min-width: 600px; }
     th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
     th { color: var(--text-muted); font-weight: 700; background: var(--bg-body); }
-    .prod-img { width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: var(--bg-body); padding: 4px; }
+    .prod-img { width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: var(--bg-body); padding: 4px; border: 1px solid var(--border); }
 
     .status-select { background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-weight: 700; outline: none; cursor: pointer; }
     .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; }
@@ -83,7 +85,7 @@
     /* Modal */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
-    .modal-content { background: var(--bg-card); color: var(--text-main); padding: 28px; border-radius: var(--radius); width: 100%; max-width: 500px; border: 1px solid var(--border); }
+    .modal-content { background: var(--bg-card); color: var(--text-main); padding: 28px; border-radius: var(--radius); width: 100%; max-width: 500px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
     .modal-content h3 { margin-bottom: 20px; font-size: 20px; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
@@ -106,9 +108,10 @@
       </div>
       <button class="theme-toggle" onclick="toggleTheme()" title="تغيير الوضع"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
     </div>
-    <div class="nav-item active" id="btn-dashboard" onclick="showAdminTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> الرئيسية</div>
-    <div class="nav-item" id="btn-products" onclick="showAdminTab('products')"><i class="fa-solid fa-box"></i> المنتجات</div>
+    <div class="nav-item active" id="btn-dashboard" onclick="showAdminTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> نظرة عامة</div>
+    <div class="nav-item" id="btn-products" onclick="showAdminTab('products')"><i class="fa-solid fa-box"></i> المنتجات والمخزون</div>
     <div class="nav-item" id="btn-orders" onclick="showAdminTab('orders')"><i class="fa-solid fa-cart-shopping"></i> الطلبات</div>
+    <div class="nav-item" id="btn-promo" onclick="showAdminTab('promo')"><i class="fa-solid fa-tags"></i> أكواد الخصم</div>
     <a href="index.html" class="nav-item" style="margin-top: auto; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> العودة للمتجر</a>
   </aside>
 
@@ -119,35 +122,53 @@
       <div class="user-badge"><i class="fa-solid fa-user-shield"></i> مرحباً، الأدمن علاء</div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
+    <!-- Stats Grid (الداشبورد الشاملة 10 كروت) -->
+    <div class="stats-grid" id="main-stats-grid">
       <div class="stat-card">
-        <div class="stat-info">
-          <span>إجمالي المبيعات</span>
-          <h2 id="statRevenue">0 ج.م</h2>
-        </div>
+        <div class="stat-info"><span>مبيعات اليوم</span><h2 id="statTodaySales">0 ج.م</h2></div>
+        <div class="stat-icon icon-blue"><i class="fa-solid fa-calendar-day"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><span>مبيعات الشهر</span><h2 id="statMonthSales">0 ج.م</h2></div>
+        <div class="stat-icon icon-blue"><i class="fa-solid fa-calendar-days"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><span>إجمالي الإيرادات</span><h2 id="statTotalSales">0 ج.م</h2></div>
         <div class="stat-icon icon-green"><i class="fa-solid fa-sack-dollar"></i></div>
       </div>
       <div class="stat-card">
-        <div class="stat-info">
-          <span>إجمالي الطلبات</span>
-          <h2 id="statOrdersCount">0</h2>
-        </div>
-        <div class="stat-icon icon-blue"><i class="fa-solid fa-cart-flatbed"></i></div>
+        <div class="stat-info"><span>إجمالي الطلبات</span><h2 id="statTotalOrders">0</h2></div>
+        <div class="stat-icon icon-purple"><i class="fa-solid fa-cart-flatbed"></i></div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-info"><span>طلبات مكتملة</span><h2 id="statCompletedOrders">0</h2></div>
+        <div class="stat-icon icon-green"><i class="fa-solid fa-check-circle"></i></div>
       </div>
       <div class="stat-card">
-        <div class="stat-info">
-          <span>المنتجات المتاحة</span>
-          <h2 id="statProductsCount">0</h2>
-        </div>
+        <div class="stat-info"><span>طلبات معلقة</span><h2 id="statPendingOrders">0</h2></div>
+        <div class="stat-icon icon-orange"><i class="fa-solid fa-clock"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><span>طلبات ملغاة</span><h2 id="statCancelledOrders">0</h2></div>
+        <div class="stat-icon icon-red"><i class="fa-solid fa-xmark-circle"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><span>إجمالي العملاء</span><h2 id="statTotalCustomers">0</h2></div>
+        <div class="stat-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info"><span>إجمالي المنتجات</span><h2 id="statTotalProducts">0</h2></div>
         <div class="stat-icon icon-purple"><i class="fa-solid fa-boxes-stacked"></i></div>
       </div>
       <div class="stat-card">
-        <div class="stat-info">
-          <span>طلبات معلقة</span>
-          <h2 id="statPendingCount">0</h2>
-        </div>
-        <div class="stat-icon icon-orange"><i class="fa-solid fa-clock"></i></div>
+        <div class="stat-info"><span>مخزون منخفض</span><h2 id="statLowStock">0</h2></div>
+        <div class="stat-icon icon-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-info"><span>نفد من المخزون</span><h2 id="statOutOfStock">0</h2></div>
+        <div class="stat-icon icon-red"><i class="fa-solid fa-ban"></i></div>
       </div>
     </div>
 
@@ -176,7 +197,7 @@
     <section id="tab-products" class="admin-section">
       <div class="panel-card">
         <div class="panel-header">
-          <h3>إدارة قائمة المنتجات</h3>
+          <h3>إدارة قائمة المنتجات والمخزون</h3>
           <button class="btn-add" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> إضافة منتج جديد</button>
         </div>
         <table>
@@ -185,7 +206,7 @@
               <th>الصورة</th>
               <th>اسم المنتج</th>
               <th>السعر الحالي</th>
-              <th>السعر القديم</th>
+              <th>المخزون (الكمية)</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
@@ -208,10 +229,32 @@
               <th>الهاتف</th>
               <th>المحافظة</th>
               <th>الإجمالي</th>
+              <th>طريقة الدفع</th>
               <th>تغيير الحالة</th>
             </tr>
           </thead>
           <tbody id="allOrdersTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Promo Codes Tab -->
+    <section id="tab-promo" class="admin-section">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h3>إدارة أكواد الخصم</h3>
+          <button class="btn-add" onclick="addNewPromo()"><i class="fa-solid fa-plus"></i> كود جديد</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>كود الخصم</th>
+              <th>قيمة الخصم (ج.م)</th>
+              <th>الحالة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="promoTable"></tbody>
         </table>
       </div>
     </section>
@@ -225,20 +268,24 @@
         <label>اسم المنتج</label>
         <input type="text" id="newProdName" placeholder="مثال: سماعة بلوتوث">
       </div>
-      <div class="form-group">
-        <label>السعر الحالي (ج.م)</label>
-        <input type="number" id="newProdPrice" placeholder="750">
-      </div>
-      <div class="form-group">
-        <label>السعر القديم (اختياري)</label>
-        <input type="number" id="newProdOldPrice" placeholder="950">
-      </div>
-      <div class="form-group">
-        <label>اختر صورة المنتج من جهازك</label>
-        <input type="file" id="newProdFile" accept="image/*" onchange="handleImageUpload(event)" style="padding: 6px;">
-        <div id="previewContainer" style="margin-top: 8px; display: none; text-align: center;">
-          <img id="imgPreview" src="" alt="معاينة" style="max-height: 80px; border-radius: 6px; border: 1px solid var(--border);">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label>السعر الحالي (ج.م)</label>
+          <input type="number" id="newProdPrice" placeholder="750">
         </div>
+        <div class="form-group">
+          <label>السعر القديم (اختياري)</label>
+          <input type="number" id="newProdOldPrice" placeholder="950">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>الكمية المتاحة (المخزون)</label>
+        <input type="number" id="newProdStock" placeholder="مثال: 50" value="10">
+      </div>
+      <div class="form-group">
+        <label>صور المنتج (اختر عدة صور)</label>
+        <input type="file" id="newProdFiles" accept="image/*" multiple onchange="handleImagesUpload(event)" style="padding: 6px;">
+        <div id="previewContainer" style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
       </div>
       <div class="form-group">
         <label>الوصف القصير</label>
@@ -251,9 +298,8 @@
     </div>
   </div>
 
-  <script src="js/products.js"></script>
   <script>
-    // إعدادات الاتصال بـ Firebase السحابي الخاص بك
+    // إعدادات الاتصال بـ Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBgiUuOxa9JKG3lTonpl8uYPaJBlUSisAU",
       authDomain: "wt-store-a71af-3c9a7.firebaseapp.com",
@@ -263,10 +309,12 @@
       appId: "1:500683952997:web:f64872a5676cde173e878c"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
 
-    let uploadedImageBase64 = "assets/logo.jpg";
+    let uploadedImagesBase64 = [];
     let cloudOrders = [];
     let adminCloudProducts = [];
 
@@ -275,7 +323,7 @@
     });
 
     function initAdminPage() {
-      // الاستماع الفوري للمنتجات من السحابة
+      // الاستماع للمنتجات
       db.collection("products").onSnapshot((snapshot) => {
         adminCloudProducts = [];
         snapshot.forEach((doc) => {
@@ -285,7 +333,7 @@
         updateStats();
       });
 
-      // الاستماع الفوري للطلبات من السحابة
+      // الاستماع للطلبات
       db.collection("orders").onSnapshot((snapshot) => {
         cloudOrders = [];
         snapshot.forEach((doc) => {
@@ -294,113 +342,189 @@
         renderOrders();
         updateStats();
       });
+
+      // الاستماع لأكواد الخصم
+      db.collection("promo_codes").onSnapshot(snap => {
+        const tbody = document.getElementById('promoTable');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (snap.empty) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد أكواد مسجلة.</td></tr>`;
+          return;
+        }
+        snap.forEach(doc => {
+          const data = doc.data();
+          tbody.innerHTML += `
+            <tr>
+              <td><b>${data.code}</b></td>
+              <td><b style="color:var(--accent-green)">${data.value} ج.م</b></td>
+              <td>${data.active ? '<span style="color:var(--accent-green)">مفعل</span>' : '<span style="color:var(--danger)">معطل</span>'}</td>
+              <td><button class="btn-danger" onclick="db.collection('promo_codes').doc('${doc.id}').delete()">حذف</button></td>
+            </tr>`;
+        });
+      });
     }
 
-    function getProductsList() {
-      return adminCloudProducts.length > 0 ? adminCloudProducts : (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []);
+    // الإحصائيات الحية
+    function updateStats() {
+      document.getElementById('statTotalProducts').textContent = adminCloudProducts.length;
+      
+      let outOfStock = 0, lowStock = 0;
+      adminCloudProducts.forEach(p => {
+        const stock = p.stock !== undefined ? parseInt(p.stock) : 10;
+        if (stock <= 0) outOfStock++;
+        else if (stock <= 3) lowStock++;
+      });
+      document.getElementById('statOutOfStock').textContent = outOfStock;
+      document.getElementById('statLowStock').textContent = lowStock;
+
+      document.getElementById('statTotalOrders').textContent = cloudOrders.length;
+
+      let totalSales = 0, todaySales = 0, monthSales = 0;
+      let pending = 0, completed = 0, cancelled = 0;
+      const customersSet = new Set();
+      const todayStr = new Date().toLocaleDateString("ar-EG");
+      const currentMonth = new Date().getMonth();
+
+      cloudOrders.forEach(o => {
+        if (o.phone) customersSet.add(o.phone);
+        const status = o.status || "بانتظار التأكيد";
+        const oTotal = parseFloat(o.total) || 0;
+
+        if (status === "بانتظار التأكيد" || status === "جاري التجهيز") pending++;
+        if (status === "تم التسليم" || status === "مكتمل") {
+          completed++;
+          totalSales += oTotal;
+          if (o.date === todayStr) todaySales += oTotal;
+          if (o.createdAt && new Date(o.createdAt).getMonth() === currentMonth) monthSales += oTotal;
+        }
+        if (status === "ملغى") cancelled++;
+      });
+
+      document.getElementById('statTotalSales').textContent = totalSales.toLocaleString('ar-EG') + " ج.م";
+      document.getElementById('statTodaySales').textContent = todaySales.toLocaleString('ar-EG') + " ج.م";
+      document.getElementById('statMonthSales').textContent = monthSales.toLocaleString('ar-EG') + " ج.م";
+      document.getElementById('statPendingOrders').textContent = pending;
+      document.getElementById('statCompletedOrders').textContent = completed;
+      document.getElementById('statCancelledOrders').textContent = cancelled;
+      document.getElementById('statTotalCustomers').textContent = customersSet.size;
     }
 
-    function handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          uploadedImageBase64 = e.target.result;
-          const preview = document.getElementById('imgPreview');
-          preview.src = uploadedImageBase64;
-          document.getElementById('previewContainer').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+    // التعامل مع رفع عدة صور
+    function handleImagesUpload(event) {
+      const files = event.target.files;
+      const preview = document.getElementById('previewContainer');
+      preview.innerHTML = '';
+      uploadedImagesBase64 = [];
+      
+      if (files) {
+        Array.from(files).forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            uploadedImagesBase64.push(e.target.result);
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.cssText = "width: 50px; height: 50px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border);";
+            preview.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
       }
     }
 
     function renderProducts() {
       const tbody = document.getElementById('adminProductsTable');
       if (!tbody) return;
-      const products = getProductsList();
-
-      if (products.length === 0) {
+      if (adminCloudProducts.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">لا توجد منتجات معروضة.</td></tr>`;
         return;
       }
-
-      tbody.innerHTML = products.map((p, idx) => `
+      tbody.innerHTML = adminCloudProducts.map((p) => `
         <tr>
-          <td><img src="${p.image}" class="prod-img" alt="${p.name}" onerror="this.src='assets/logo.jpg'"></td>
+          <td><img src="${(p.images && p.images.length > 0) ? p.images[0] : p.image}" class="prod-img" onerror="this.src='assets/logo.jpg'"></td>
           <td><b>${p.name}</b></td>
           <td><b style="color:var(--accent-green)">${p.price} ج.م</b></td>
-          <td><s style="color:var(--text-muted)">${p.oldPrice ? p.oldPrice + ' ج.م' : '-'}</s></td>
           <td>
-            <button class="btn-danger" onclick="deleteProduct(${idx})"><i class="fa-solid fa-trash"></i> حذف</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="number" value="${p.stock !== undefined ? p.stock : 10}" onchange="updateStock('${p.docId}', this.value)" style="width:60px; padding:4px; text-align:center; border:1px solid var(--border); border-radius:4px; background:var(--bg-body); color:var(--text-main);">
+              ${(p.stock <= 0) ? '<span style="color:var(--danger); font-size:12px;">نفد</span>' : ''}
+            </div>
+          </td>
+          <td>
+            <button class="btn-danger" onclick="deleteProduct('${p.docId}')"><i class="fa-solid fa-trash"></i> حذف</button>
           </td>
         </tr>
       `).join('');
     }
 
-    // حذف منتج سحابياً من Firebase
-    async function deleteProduct(idx) {
-      if (confirm("هل أنت متأكد من حذف هذا المنتج نهائياً من المتجر لدى جميع الزوار؟")) {
-        const products = getProductsList();
-        const target = products[idx];
-        if (target && target.docId) {
-          try {
-            await db.collection("products").doc(target.docId).delete();
-            alert("تم حذف المنتج سحابياً بنجاح!");
-          } catch (err) {
-            console.error("خطأ في حذف المنتج:", err);
-          }
+    async function updateStock(docId, newStock) {
+      const stockVal = parseInt(newStock) || 0;
+      await db.collection("products").doc(docId).update({ stock: stockVal });
+    }
+
+    async function deleteProduct(docId) {
+      if (confirm("هل أنت متأكد من حذف هذا المنتج نهائياً؟")) {
+        try {
+          await db.collection("products").doc(docId).delete();
+        } catch (err) {
+          console.error("خطأ:", err);
         }
       }
     }
 
     function openAddModal() {
-      uploadedImageBase64 = "assets/logo.jpg";
-      const fileInput = document.getElementById('newProdFile');
-      if (fileInput) fileInput.value = '';
-      const previewContainer = document.getElementById('previewContainer');
-      if (previewContainer) previewContainer.style.display = 'none';
+      uploadedImagesBase64 = [];
+      document.getElementById('newProdFiles').value = '';
+      document.getElementById('previewContainer').innerHTML = '';
       document.getElementById('addProductModal').classList.add('active');
     }
+    function closeAddModal() { document.getElementById('addProductModal').classList.remove('active'); }
 
-    function closeAddModal() {
-      document.getElementById('addProductModal').classList.remove('active');
-    }
-
-    // حفظ منتج جديد سحابياً في Firebase
     async function saveNewProduct() {
       const name = document.getElementById('newProdName').value.trim();
       const price = document.getElementById('newProdPrice').value.trim();
       const oldPrice = document.getElementById('newProdOldPrice').value.trim();
+      const stock = document.getElementById('newProdStock').value.trim();
       const desc = document.getElementById('newProdDesc').value.trim();
 
-      if (!name || !price) {
-        alert("يرجى إدخال اسم المنتج والسعر على الأقل!");
-        return;
-      }
+      if (!name || !price) { alert("أدخل الاسم والسعر!"); return; }
+
+      const finalImages = uploadedImagesBase64.length > 0 ? uploadedImagesBase64 : ["assets/logo.jpg"];
 
       const newProd = {
         id: Date.now(),
         name: name,
         price: parseInt(price, 10),
         oldPrice: oldPrice ? parseInt(oldPrice, 10) : parseInt(price, 10) + 200,
-        image: uploadedImageBase64,
-        shortDesc: desc || "منتج ممتاز عالي الجودة.",
-        description: desc || "منتج عالي الجودة متوفر الآن.",
-        specs: ["ضمان أصلية 100%", "شحن سريع"]
+        stock: parseInt(stock, 10) || 0,
+        images: finalImages,
+        image: finalImages[0], 
+        shortDesc: desc || "منتج ممتاز.",
+        description: desc || "منتج عالي الجودة.",
+        specs: ["ضمان 100%", "شحن سريع"]
       };
 
       try {
         await db.collection("products").add(newProd);
-
         document.getElementById('newProdName').value = '';
         document.getElementById('newProdPrice').value = '';
         document.getElementById('newProdOldPrice').value = '';
+        document.getElementById('newProdStock').value = '10';
         document.getElementById('newProdDesc').value = '';
-
         closeAddModal();
-        alert("تمت إضافة المنتج سحابياً وسيظهر عند كل الزوار فوراً!");
-      } catch (err) {
-        console.error("خطأ في حفظ المنتج سحابياً:", err);
+      } catch (err) { console.error("خطأ:", err); }
+    }
+
+    // إدارة أكواد الخصم
+    async function addNewPromo() {
+      const code = prompt("أدخل كود الخصم (مثال: WT20)");
+      const value = prompt("أدخل قيمة الخصم بالجنيه (مثال: 50)");
+      if (code && value) {
+        await db.collection("promo_codes").add({
+          code: code.trim().toUpperCase(),
+          value: parseInt(value),
+          active: true
+        });
       }
     }
 
@@ -410,36 +534,28 @@
       const statuses = ["بانتظار التأكيد", "جاري التجهيز", "في طريقها للتوصيل", "تم التسليم", "ملغى"];
 
       if (dashTbody) {
-        if (cloudOrders.length === 0) {
-          dashTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد طلبات واردة بعد.</td></tr>`;
-        } else {
-          dashTbody.innerHTML = cloudOrders.slice(-5).reverse().map(o => `
+        dashTbody.innerHTML = cloudOrders.length === 0 ? `<tr><td colspan="5" style="text-align:center;">لا طلبات</td></tr>` : 
+          cloudOrders.slice(-5).reverse().map(o => `
             <tr>
               <td><b>${o.orderNumber}</b></td>
               <td>${o.name}</td>
               <td>${o.phone}</td>
               <td><b>${o.total} ج.م</b></td>
-              <td>
-                <select class="status-select" onchange="updateOrderStatus('${o.docId}', this.value)">
-                  ${statuses.map(s => `<option value="${s}" ${(o.status || 'بانتظار التأكيد') === s ? 'selected' : ''}>${s}</option>`).join('')}
-                </select>
-              </td>
+              <td><span style="color:var(--primary); font-weight:bold;">${o.status || 'بانتظار التأكيد'}</span></td>
             </tr>
           `).join('');
-        }
       }
 
       if (allTbody) {
-        if (cloudOrders.length === 0) {
-          allTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px; color:var(--text-muted);">لا توجد طلبات مسجلة.</td></tr>`;
-        } else {
-          allTbody.innerHTML = cloudOrders.map(o => `
+        allTbody.innerHTML = cloudOrders.length === 0 ? `<tr><td colspan="7" style="text-align:center;">لا طلبات</td></tr>` :
+          cloudOrders.reverse().map(o => `
             <tr>
               <td><b>${o.orderNumber}</b></td>
               <td>${o.name}</td>
               <td>${o.phone}</td>
-              <td>${o.province || 'غير محدد'}</td>
+              <td>${o.province || '-'}</td>
               <td><b>${o.total} ج.م</b></td>
+              <td><span style="background:var(--bg-body); padding:4px 8px; border-radius:6px; font-size:12px;">${o.paymentMethod || 'الدفع عند الاستلام'}</span></td>
               <td>
                 <select class="status-select" onchange="updateOrderStatus('${o.docId}', this.value)">
                   ${statuses.map(s => `<option value="${s}" ${(o.status || 'بانتظار التأكيد') === s ? 'selected' : ''}>${s}</option>`).join('')}
@@ -447,69 +563,34 @@
               </td>
             </tr>
           `).join('');
-        }
       }
     }
 
     function updateOrderStatus(docId, newStatus) {
-      db.collection("orders").doc(docId).update({
-        status: newStatus
-      }).then(() => {
-        updateStats();
-      }).catch((error) => {
-        console.error("خطأ في تحديث الحالة:", error);
-      });
-    }
-
-    function updateStats() {
-      const products = getProductsList();
-      let totalRevenue = 0;
-      cloudOrders.forEach(o => {
-        totalRevenue += parseFloat(o.total || 0);
-      });
-
-      document.getElementById('statRevenue').textContent = totalRevenue.toLocaleString('ar-EG') + " ج.م";
-      document.getElementById('statOrdersCount').textContent = cloudOrders.length;
-      document.getElementById('statProductsCount').textContent = products.length;
-      document.getElementById('statPendingCount').textContent = cloudOrders.filter(o => (o.status || 'بانتظار التأكيد') === 'بانتظار التأكيد').length;
+      db.collection("orders").doc(docId).update({ status: newStatus });
     }
 
     function showAdminTab(tabName) {
-      document.querySelectorAll('.admin-section').forEach(sec => {
-        sec.style.display = 'none';
-        sec.classList.remove('active');
-      });
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-
+      document.querySelectorAll('.admin-section').forEach(sec => { sec.style.display = 'none'; sec.classList.remove('active'); });
+      document.querySelectorAll('.nav-item').forEach(item => { item.classList.remove('active'); });
+      
       const activeSec = document.getElementById('tab-' + tabName);
-      if (activeSec) {
-        activeSec.style.display = 'block';
-        activeSec.classList.add('active');
-      }
-
+      if (activeSec) { activeSec.style.display = 'block'; activeSec.classList.add('active'); }
+      
       const activeBtn = document.getElementById('btn-' + tabName);
-      if (activeBtn) {
-        activeBtn.classList.add('active');
-      }
-
-      const titles = {
-        dashboard: "نظرة عامة على المتجر",
-        products: "إدارة المنتجات",
-        orders: "إدارة الطلبات"
-      };
+      if (activeBtn) activeBtn.classList.add('active');
+      
+      const titles = { dashboard: "نظرة عامة على المتجر", products: "إدارة المنتجات والمخزون", orders: "إدارة الطلبات", promo: "إدارة أكواد الخصم" };
       document.getElementById('pageTitle').textContent = titles[tabName] || "لوحة التحكم";
+
+      // إخفاء/إظهار شبكة الإحصائيات العلوية بناءً على التبويب
+      document.getElementById('main-stats-grid').style.display = (tabName === 'dashboard') ? 'grid' : 'none';
     }
 
     function toggleTheme() {
       document.body.classList.toggle('dark-mode');
       const icon = document.getElementById('themeIcon');
-      if (document.body.classList.contains('dark-mode')) {
-        icon.className = 'fa-solid fa-sun';
-      } else {
-        icon.className = 'fa-solid fa-moon';
-      }
+      icon.className = document.body.classList.contains('dark-mode') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
     }
   </script>
 </body>
