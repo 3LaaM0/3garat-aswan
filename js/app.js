@@ -57,7 +57,6 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
-// دالة العرض بدقة ومنع النزول الخاطئ للأسفل
 function renderView(view, params) {
   if (view === "products" || view === "productsSection") {
     scrollToSection("productsSection");
@@ -71,7 +70,6 @@ function renderView(view, params) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   const target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
-
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   target.classList.add("active");
 
@@ -85,11 +83,10 @@ function executeViewRender(view, params) {
   if (view === "myorders") renderMyOrdersView();
 }
 
-// ---------- جلب المنتجات السحابية الحية من Firebase ----------
+// ---------- جلب المنتجات السحابية الحية ----------
 let cloudProducts = [];
 
 function initCloudProducts() {
-  // تهيئة Firebase في ملف العميل إذا لم يكن مهيأً
   if (typeof firebase !== 'undefined') {
     if (!firebase.apps.length) {
       const firebaseConfig = {
@@ -117,21 +114,15 @@ function initCloudProducts() {
 }
 
 function getActiveProducts() {
-  if (cloudProducts && cloudProducts.length > 0) {
-    return cloudProducts;
-  }
+  if (cloudProducts && cloudProducts.length > 0) return cloudProducts;
   const saved = localStorage.getItem('wt_custom_products');
   if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch (e) {
-      console.error(e);
-    }
+    try { return JSON.parse(saved); } catch (e) { console.error(e); }
   }
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
 
-// ---------- عرض المنتجات بالرئيسية ----------
+// ---------- عرض المنتجات بالرئيسية مع فحص المخزون ----------
 function renderProductGrid() {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
@@ -143,25 +134,37 @@ function renderProductGrid() {
     return;
   }
 
-  grid.innerHTML = productsList.map(p => `
-    <div class="product-card fade-in-up">
-      <div class="product-image" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">
-        <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='assets/logo.jpg'">
-      </div>
-      <div class="product-body">
-        <h3 class="product-name" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">${p.name}</h3>
-        <p class="product-desc">${p.shortDesc || ''}</p>
-        <div class="product-price-row">
-          <span class="price">${p.price} ${STORE_CONFIG.currency}</span>
-          <span class="old-price">${p.oldPrice ? p.oldPrice + ' ' + STORE_CONFIG.currency : ''}</span>
+  grid.innerHTML = productsList.map(p => {
+    // تحديد الصورة الأولى للمنتج
+    const imgSrc = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'assets/logo.jpg');
+    // فحص المخزون
+    const stock = p.stock !== undefined ? parseInt(p.stock) : 10;
+    const isOut = stock <= 0;
+
+    const btnHtml = isOut
+      ? `<button class="btn" disabled style="background:#444; color:#aaa; cursor:not-allowed; flex:1;">نفد المخزون ❌</button>`
+      : `<button class="btn btn-primary" onclick="quickAddToCart(${p.id}, event)" style="flex:1;">إضافة للسلة</button>`;
+
+    return `
+      <div class="product-card fade-in-up">
+        <div class="product-image" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">
+          <img src="${imgSrc}" alt="${p.name}" loading="lazy" onerror="this.src='assets/logo.jpg'">
         </div>
-        <div class="product-actions">
-          <button class="btn btn-outline" onclick="navigate('product', {id: ${p.id}})">التفاصيل</button>
-          <button class="btn btn-primary" onclick="quickAddToCart(${p.id}, event)">إضافة للسلة</button>
+        <div class="product-body">
+          <h3 class="product-name" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">${p.name}</h3>
+          <p class="product-desc">${p.shortDesc || ''}</p>
+          <div class="product-price-row">
+            <span class="price">${p.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
+            <span class="old-price">${p.oldPrice ? p.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
+          </div>
+          <div class="product-actions">
+            <button class="btn btn-outline" onclick="navigate('product', {id: ${p.id}})" style="flex:1;">التفاصيل</button>
+            ${btnHtml}
+          </div>
         </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 }
 
 function quickAddToCart(id, e) {
@@ -170,7 +173,7 @@ function quickAddToCart(id, e) {
   showToast("تمت إضافة المنتج إلى السلة بنجاح 🛍️");
 }
 
-// ---------- صفحة تفاصيل المنتج ----------
+// ---------- صفحة تفاصيل المنتج (بها معرض الصور والمخزون) ----------
 function renderProductDetails(id) {
   const productsList = getActiveProducts();
   const product = productsList.find(p => p.id === id) || productsList[0];
@@ -178,13 +181,31 @@ function renderProductDetails(id) {
   if (!el || !product) return;
 
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
+  const productImages = (product.images && product.images.length > 0) ? product.images : [product.image || 'assets/logo.jpg'];
+  
+  const stock = product.stock !== undefined ? parseInt(product.stock) : 10;
+  const isOut = stock <= 0;
+
+  const actionsHtml = isOut
+    ? `<button class="btn btn-lg full" disabled style="background:#444; color:#aaa; cursor:not-allowed; border:none;">عذراً، نفد المخزون ❌</button>`
+    : `<button class="btn btn-outline btn-lg" onclick="addDetailToCart(${product.id})">إضافة إلى السلة</button>
+       <button class="btn btn-primary btn-lg" onclick="buyNow(${product.id})">شراء الآن</button>`;
 
   el.innerHTML = `
     <div class="container product-details">
       <button class="back-btn" onclick="navigate('home')">← العودة للمنتجات</button>
       <div class="details-grid">
-        <div class="details-image">
-          <img src="${product.image}" alt="${product.name}" onerror="this.src='assets/logo.jpg'">
+        <div class="details-gallery">
+          <div class="details-image" style="margin-bottom: 12px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card);">
+            <img id="mainProductImg" src="${productImages[0]}" alt="${product.name}" style="width: 100%; height: 350px; object-fit: contain;" onerror="this.src='assets/logo.jpg'">
+          </div>
+          ${productImages.length > 1 ? `
+            <div class="gallery-thumbs" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+              ${productImages.map((imgSrc, idx) => `
+                <img src="${imgSrc}" onclick="changeMainImage('${imgSrc}', this)" style="width: 70px; height: 70px; min-width: 70px; object-fit: contain; border-radius: 8px; border: 2px solid ${idx === 0 ? '#10b981' : 'var(--border)'}; cursor: pointer; background: var(--bg-card); padding: 4px; transition: border-color 0.2s;" alt="صورة مصغرة">
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
         <div class="details-info">
           <h1>${product.name}</h1>
@@ -195,8 +216,8 @@ function renderProductDetails(id) {
           </div>
 
           <div class="product-price-row large">
-            <span class="price">${product.price} ${STORE_CONFIG.currency}</span>
-            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + STORE_CONFIG.currency : ''}</span>
+            <span class="price">${product.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
+            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
           </div>
           
           <div class="product-rating" style="display: flex; align-items: center; gap: 8px; margin: 10px 0; color: #ffaa00; font-size: 14px;">
@@ -210,15 +231,16 @@ function renderProductDetails(id) {
             ${(product.specs || ["ضمان أصلية 100%", "شحن سريع"]).map(s => `<li>✓ ${s}</li>`).join("")}
           </ul>
 
+          ${!isOut ? `
           <div class="qty-selector">
             <span>الكمية:</span>
             <button onclick="changeDetailQty(-1)">−</button>
             <span id="detailQty">1</span>
             <button onclick="changeDetailQty(1)">+</button>
-          </div>
+          </div>` : ''}
+          
           <div class="details-actions">
-            <button class="btn btn-outline btn-lg" onclick="addDetailToCart(${product.id})">إضافة إلى السلة</button>
-            <button class="btn btn-primary btn-lg" onclick="buyNow(${product.id})">شراء الآن</button>
+            ${actionsHtml}
           </div>
         </div>
       </div>
@@ -226,6 +248,18 @@ function renderProductDetails(id) {
   `;
   window._detailQty = 1;
 }
+
+// دالة تقليب الصور في تفاصيل المنتج
+window.changeMainImage = function(src, thumbEl) {
+  const mainImg = document.getElementById('mainProductImg');
+  if (mainImg) mainImg.src = src;
+  
+  if (thumbEl) {
+    const thumbs = thumbEl.parentElement.querySelectorAll('img');
+    thumbs.forEach(t => t.style.borderColor = 'var(--border)');
+    thumbEl.style.borderColor = '#10b981'; // إطار بلون مميز للصورة النشطة
+  }
+};
 
 function changeDetailQty(delta) {
   window._detailQty = Math.max(1, (window._detailQty || 1) + delta);
@@ -263,22 +297,25 @@ function renderCartView() {
     return;
   }
 
-  const rows = items.map(i => `
-    <div class="cart-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border);">
-      <img src="${i.image}" alt="${i.name}" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.src='assets/logo.jpg'">
-      <div class="cart-row-info" style="flex: 1; padding: 0 15px; text-align: right;">
-        <h4 style="margin: 0 0 5px; color: var(--text-main);">${i.name}</h4>
-        <span class="price" style="color: var(--accent-green); font-weight: bold;">${i.price} ${STORE_CONFIG.currency}</span>
+  const rows = items.map(i => {
+    const imgSrc = (i.images && i.images.length > 0) ? i.images[0] : (i.image || 'assets/logo.jpg');
+    return `
+      <div class="cart-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border);">
+        <img src="${imgSrc}" alt="${i.name}" style="width: 60px; height: 60px; object-fit: contain;" onerror="this.src='assets/logo.jpg'">
+        <div class="cart-row-info" style="flex: 1; padding: 0 15px; text-align: right;">
+          <h4 style="margin: 0 0 5px; color: var(--text-main);">${i.name}</h4>
+          <span class="price" style="color: #10b981; font-weight: bold;">${i.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
+        </div>
+        <div class="cart-qty" style="display: flex; align-items: center; gap: 10px;">
+          <button onclick="Cart.decrease(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">−</button>
+          <span>${i.qty}</span>
+          <button onclick="Cart.increase(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">+</button>
+        </div>
+        <div class="cart-row-total" style="font-weight: bold; padding: 0 15px;">${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}</div>
+        <button class="remove-btn" onclick="Cart.remove(${i.id}); renderCartView(); Cart.updateCounter();" style="background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer;">✕</button>
       </div>
-      <div class="cart-qty" style="display: flex; align-items: center; gap: 10px;">
-        <button onclick="Cart.decrease(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">−</button>
-        <span>${i.qty}</span>
-        <button onclick="Cart.increase(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">+</button>
-      </div>
-      <div class="cart-row-total" style="font-weight: bold; padding: 0 15px;">${i.price * i.qty} ${STORE_CONFIG.currency}</div>
-      <button class="remove-btn" onclick="Cart.remove(${i.id}); renderCartView(); Cart.updateCounter();" style="background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer;">✕</button>
-    </div>
-  `).join("");
+    `;
+  }).join("");
 
   el.innerHTML = `
     <div class="container" style="padding: 40px 20px;">
@@ -290,16 +327,16 @@ function renderCartView() {
         </div>
         <div class="cart-summary" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); height: fit-content;">
           <h3 style="margin-bottom: 15px;">ملخص الطلب</h3>
-          <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-muted);"><span>المجموع الفرعي</span><span>${Cart.subtotal()} ${STORE_CONFIG.currency}</span></div>
-          <div class="summary-row total" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px; color: var(--text-main);"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency}</span></div>
-          <button class="btn btn-primary btn-lg full" onclick="navigate('checkout')" style="width: 100%; margin-bottom: 10px; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">إتمام الطلب</button>
+          <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-muted);"><span>المجموع الفرعي</span><span>${Cart.subtotal()} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
+          <div class="summary-row total" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px; color: var(--text-main);"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
+          <button class="btn btn-primary btn-lg full" onclick="navigate('checkout')" style="width: 100%; margin-bottom: 10px; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">إتمام الطلب</button>
           <button class="btn btn-outline full" onclick="navigate('home')" style="width: 100%; padding: 12px; background: none; border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; font-weight: bold; cursor: pointer;">متابعة التسوق</button>
         </div>
       </div>
     </div>`;
 }
 
-// ---------- الدفع ----------
+// ---------- الدفع والبرومو كود وطرق الدفع ----------
 function renderCheckoutView() {
   const el = document.getElementById("view-checkout");
   if (!el) return;
@@ -318,12 +355,8 @@ function renderCheckoutView() {
     return;
   }
 
-  const rows = items.map(i => `
-    <div class="summary-row">
-      <span>${i.name} × ${i.qty}</span>
-      <span>${i.price * i.qty} ${STORE_CONFIG.currency}</span>
-    </div>
-  `).join("");
+  // تصفير الخصم المطبق عند دخول صفحة التشيك أوت
+  window._appliedPromo = null;
 
   el.innerHTML = `
     <div class="container">
@@ -365,25 +398,47 @@ function renderCheckoutView() {
             <textarea id="fAddress" rows="3" placeholder="اسم الشارع، رقم المبنى، علامة مميزة..."></textarea>
             <span class="error" id="err-fAddress"></span>
           </div>
+
+          <!-- إضافة طرق الدفع -->
+          <div class="form-group">
+            <label>طريقة الدفع</label>
+            <select id="fPaymentMethod" style="width: 100%; padding: 12px 14px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px;">
+              <option value="الدفع عند الاستلام">الدفع عند الاستلام (كاش)</option>
+              <option value="فودافون كاش">فودافون كاش</option>
+              <option value="إنستا باي (InstaPay)">إنستا باي (InstaPay)</option>
+            </select>
+          </div>
+
+          <!-- البرومو كود -->
+          <div class="form-group" style="background:var(--bg-body); padding:15px; border-radius:10px; border:1px dashed var(--border); margin-top: 20px;">
+            <label>هل لديك كود خصم؟</label>
+            <div style="display:flex; gap:10px;">
+              <input type="text" id="promoInput" placeholder="أدخل كود الخصم" style="flex:1; margin:0;">
+              <button type="button" class="btn btn-outline" onclick="applyPromo()">تطبيق الخصم</button>
+            </div>
+            <p id="promoMsg" style="font-size:13px; margin-top:8px; font-weight:bold;"></p>
+          </div>
+
           <div class="form-group">
             <label>ملاحظات إضافية (اختياري)</label>
             <textarea id="fNotes" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
           </div>
-          <button type="button" id="confirmOrderBtn" class="btn btn-primary btn-lg full">تأكيد الطلب</button>
+          <button type="button" id="confirmOrderBtn" class="btn btn-primary btn-lg full" style="margin-top: 15px;">تأكيد الطلب</button>
         </form>
         <div class="cart-summary">
           <h3>ملخص الطلب</h3>
-          ${rows}
-          <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency}</span></div>
+          <div id="checkoutSummaryContainer"></div>
         </div>
       </div>
     </div>`;
 
+  // تحديث السعر النهائي عند الفتح
+  updateCheckoutSummary();
+
   setTimeout(() => {
     const btn = document.getElementById("confirmOrderBtn");
-    if (btn) {
-      btn.onclick = executeOrderSubmission;
-    }
+    if (btn) btn.onclick = executeOrderSubmission;
+    
     ["fPhone", "fWhatsapp"].forEach(id => {
       const input = document.getElementById(id);
       if (input) {
@@ -394,6 +449,64 @@ function renderCheckoutView() {
     });
   }, 100);
 }
+
+// دالة التحقق من البرومو كود وتطبيقه
+window.applyPromo = async function() {
+  const codeInput = document.getElementById('promoInput');
+  const msgEl = document.getElementById('promoMsg');
+  if (!codeInput || !msgEl) return;
+  
+  const code = codeInput.value.trim().toUpperCase();
+  if (!code) return;
+
+  msgEl.textContent = "جاري التحقق من الكود...";
+  msgEl.style.color = "var(--text-muted)";
+
+  try {
+    const db = firebase.firestore();
+    const snap = await db.collection("promo_codes").where("code", "==", code).where("active", "==", true).get();
+    
+    if (!snap.empty) {
+      const promo = snap.docs[0].data();
+      window._appliedPromo = { code: promo.code, value: promo.value };
+      msgEl.textContent = `تم تطبيق خصم بقيمة ${promo.value} ج.م بنجاح! 🎉`;
+      msgEl.style.color = "#10b981"; 
+      updateCheckoutSummary();
+    } else {
+      window._appliedPromo = null;
+      msgEl.textContent = "الكود غير صحيح، أو تم إيقافه.";
+      msgEl.style.color = "var(--danger)";
+      updateCheckoutSummary();
+    }
+  } catch (err) {
+    console.error("خطأ في التحقق من الكود:", err);
+    msgEl.textContent = "حدث خطأ في الشبكة.";
+    msgEl.style.color = "var(--danger)";
+  }
+};
+
+// تحديث الإجمالي في التشيك أوت ليعكس الخصم
+window.updateCheckoutSummary = function() {
+  const container = document.getElementById('checkoutSummaryContainer');
+  if (!container) return;
+  const items = Cart.detailedItems();
+  const subtotal = Cart.total();
+  let discountVal = window._appliedPromo ? window._appliedPromo.value : 0;
+  let finalTotal = Math.max(0, subtotal - discountVal);
+
+  let html = items.map(i => `<div class="summary-row"><span>${i.name} × ${i.qty}</span><span>${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`).join('');
+  
+  html += `<hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">`;
+  html += `<div class="summary-row"><span>المجموع الفرعي</span><span>${subtotal} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`;
+  
+  if (window._appliedPromo) {
+    html += `<div class="summary-row" style="color:#10b981; font-weight:bold;"><span>الخصم (${window._appliedPromo.code})</span><span>-${discountVal} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`;
+  }
+  
+  html += `<div class="summary-row total" style="font-size: 18px; margin-top: 10px;"><span>الإجمالي النهائي</span><span style="color:#10b981;">${finalTotal} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`;
+  
+  container.innerHTML = html;
+};
 
 async function executeOrderSubmission(e) {
   if (e) e.preventDefault();
@@ -433,9 +546,14 @@ async function executeOrderSubmission(e) {
 
   if (!valid) return;
 
+  const paymentMethod = document.getElementById("fPaymentMethod") ? document.getElementById("fPaymentMethod").value : "الدفع عند الاستلام";
   const items = Cart.detailedItems();
+  const subtotal = Cart.total();
+  const discountVal = window._appliedPromo ? window._appliedPromo.value : 0;
+  const finalTotal = Math.max(0, subtotal - discountVal);
   const orderNumber = "QR-" + Math.floor(100000 + Math.random() * 900000);
-  const itemsText = items.map(i => `• ${i.name} (×${i.qty}) - ${i.price * i.qty} ${STORE_CONFIG.currency}`).join("\n");
+  
+  const itemsText = items.map(i => `• ${i.name} (×${i.qty}) - ${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}`).join("\n");
 
   const order = {
     orderNumber: orderNumber,
@@ -445,9 +563,13 @@ async function executeOrderSubmission(e) {
     province: values.fProvince,
     city: values.fCity,
     address: values.fAddress,
+    paymentMethod: paymentMethod,
+    promoCode: window._appliedPromo ? window._appliedPromo.code : null,
+    discount: discountVal,
+    subtotal: subtotal,
+    total: finalTotal,
     notes: document.getElementById("fNotes") ? document.getElementById("fNotes").value.trim() : '',
     items: items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
-    total: Cart.total(),
     date: new Date().toLocaleDateString("ar-EG"),
     status: "بانتظار التأكيد",
     createdAt: Date.now()
@@ -457,6 +579,18 @@ async function executeOrderSubmission(e) {
     try {
       const db = firebase.firestore();
       await db.collection("orders").add(order);
+      
+      // خصم الكمية من المخزون تلقائياً بعد الشراء
+      for (const item of order.items) {
+        const pRef = await db.collection("products").where("id", "==", item.id).get();
+        if (!pRef.empty) {
+          const doc = pRef.docs[0];
+          const currStock = parseInt(doc.data().stock) || 0;
+          await db.collection("products").doc(doc.id).update({
+            stock: Math.max(0, currStock - item.qty)
+          });
+        }
+      }
     } catch (err) {
       console.error("خطأ في رفع الطلب للسحابة:", err);
     }
@@ -469,6 +603,8 @@ async function executeOrderSubmission(e) {
   const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
   const chatId = '5535861156';
 
+  const promoText = window._appliedPromo ? `\n🎟️ كود الخصم: ${window._appliedPromo.code} (خصم ${discountVal} ج.م)` : '';
+
   const telegramMessage = `
 🔔 طلب جديد من متجر WT Store!
 
@@ -479,12 +615,13 @@ async function executeOrderSubmission(e) {
 📍 المحافظة: ${values.fProvince}
 🏙️ المدينة: ${values.fCity}
 🏠 العنوان: ${values.fAddress}
+💳 طريقة الدفع: ${paymentMethod}${promoText}
 📝 ملاحظات: ${order.notes || 'لا يوجد'}
 
 🛒 تفاصيل المنتجات:
 ${itemsText}
 
-💰 الإجمالي: ${order.total} ${STORE_CONFIG.currency}
+💰 الإجمالي النهائي: ${finalTotal} ${STORE_CONFIG.currency || 'ج.م'}
   `.trim();
 
   try {
@@ -516,6 +653,18 @@ function renderSuccessView(order) {
     el.innerHTML = `<div class="container"><p>لا يوجد طلب حديث لعرضه.</p></div>`;
     return;
   }
+  
+  let paymentInstructions = "";
+  if (order.paymentMethod === "فودافون كاش") {
+    paymentInstructions = `<div style="background:rgba(230,0,0,0.1); color:#e60000; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #e60000;">
+      <strong>تعليمات الدفع:</strong> برجاء تحويل مبلغ ${order.total} ج.م إلى رقم فودافون كاش الخاص بنا والتواصل معنا لتأكيد التحويل.
+    </div>`;
+  } else if (order.paymentMethod === "إنستا باي (InstaPay)") {
+    paymentInstructions = `<div style="background:rgba(102,0,204,0.1); color:#6600cc; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #6600cc;">
+      <strong>تعليمات الدفع:</strong> برجاء تحويل مبلغ ${order.total} ج.م عبر إنستا باي والتواصل معنا لتأكيد التحويل.
+    </div>`;
+  }
+
   el.innerHTML = `
     <div class="container success-view">
       <div class="success-icon">🎉</div>
@@ -523,8 +672,10 @@ function renderSuccessView(order) {
       <div class="success-card">
         <div class="summary-row"><span>رقم الطلب</span><span>${order.orderNumber}</span></div>
         <div class="summary-row"><span>الاسم</span><span>${order.name}</span></div>
-        <div class="summary-row"><span>الإجمالي</span><span>${order.total} ${STORE_CONFIG.currency}</span></div>
+        <div class="summary-row"><span>طريقة الدفع</span><span>${order.paymentMethod || 'الدفع عند الاستلام'}</span></div>
+        <div class="summary-row"><span>الإجمالي</span><span>${order.total} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
         <div class="summary-row"><span>الحالة</span><span class="status-badge">بانتظار التأكيد</span></div>
+        ${paymentInstructions}
       </div>
       <div class="success-actions">
         <button class="btn btn-primary btn-lg" onclick="navigate('myorders')">عرض طلباتي</button>
@@ -558,21 +709,21 @@ function renderMyOrdersView() {
     const status = order.status || "بانتظار التأكيد";
     let statusColor = "#ffaa00";
     if (status === "جاري التجهيز") statusColor = "#0088ff";
-    if (status === "في طريقها للتوصيل") statusColor = "#00ff66";
-    if (status === "تم التسليم") statusColor = "#00ff66";
-    if (status === "ملغى") statusColor = "#ff5c5c";
+    if (status === "في طريقها للتوصيل") statusColor = "#10b981";
+    if (status === "تم التسليم") statusColor = "#10b981";
+    if (status === "ملغى") statusColor = "#ef4444";
 
     return `
-      <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid #222;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 10px;">
-          <h3 style="margin: 0; color: #fff;">رقم الطلب: ${order.orderNumber}</h3>
+      <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;">
+          <h3 style="margin: 0; color: var(--text-main);">رقم الطلب: ${order.orderNumber}</h3>
           <span style="background: rgba(0,255,102,0.1); color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">${status}</span>
         </div>
         <div class="summary-row"><span>اسم العميل:</span><span>${order.name}</span></div>
-        <div class="summary-row"><span>الهاتف:</span><span>${order.phone}</span></div>
+        <div class="summary-row"><span>طريقة الدفع:</span><span><b style="color:var(--text-muted);">${order.paymentMethod || 'الدفع عند الاستلام'}</b></span></div>
         <div class="summary-row"><span>العنوان:</span><span>${order.province} - ${order.city} - ${order.address}</span></div>
-        <div class="summary-row"><span>الإجمالي:</span><span style="color: #00ff66; font-weight: bold;">${order.total} ${STORE_CONFIG.currency}</span></div>
-        <div style="margin-top: 10px; font-size: 13px; color: #888;">تاريخ الطلب: ${order.date}</div>
+        <div class="summary-row"><span>الإجمالي:</span><span style="color: #10b981; font-weight: bold;">${order.total} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
+        <div style="margin-top: 10px; font-size: 13px; color: var(--text-muted);">تاريخ الطلب: ${order.date}</div>
       </div>
     `;
   }).join("");
@@ -610,7 +761,7 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
-// ---------- النزول المباشر والسلس للأقسام بدون خربطة ----------
+// ---------- النزول المباشر والسلس للأقسام ----------
 function scrollToSection(sectionId) {
   closeMobileMenu();
   const homeView = document.getElementById("view-home");
@@ -640,7 +791,7 @@ window.addEventListener("hashchange", () => {
 
 // ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
-  initCloudProducts(); // تفعيل جلب وتحديث المنتجات سحابياً فوراً
+  initCloudProducts(); 
   
   if (typeof Cart !== "undefined" && Cart.updateCounter) {
     Cart.updateCounter();
