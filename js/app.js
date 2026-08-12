@@ -57,7 +57,7 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
-// دالة العرض - تم تصحيح مشكلة الإخفاء الإجباري هنا
+// دالة العرض بدقة ومنع النزول الخاطئ للأسفل
 function renderView(view, params) {
   if (view === "products" || view === "productsSection") {
     scrollToSection("productsSection");
@@ -75,7 +75,7 @@ function renderView(view, params) {
   // إزالة أي أوامر إخفاء إجبارية من كل الصفحات
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
-    v.style.display = ""; // هذا السطر يحل المشكلة جذرياً
+    v.style.display = ""; 
   });
   
   target.classList.add("active");
@@ -113,7 +113,13 @@ function initCloudProducts() {
       snapshot.forEach((doc) => {
         cloudProducts.push({ docId: doc.id, ...doc.data() });
       });
-      renderProductGrid();
+      
+      // التعديل: تحديث صفحة المنتج الحالية فور وصول البيانات لتجنب خطأ الريفريش
+      const { view, params } = parseHash();
+      if (view === "product" && params.id) {
+        renderProductDetails(params.id); 
+      }
+      renderProductGrid(); 
     }, (error) => {
       console.error("خطأ في جلب المنتجات السحابية:", error);
     });
@@ -142,9 +148,7 @@ function renderProductGrid() {
   }
 
   grid.innerHTML = productsList.map(p => {
-    // تحديد الصورة الأولى للمنتج
     const imgSrc = (p.images && p.images.length > 0) ? p.images[0] : (p.image || 'assets/logo.jpg');
-    // فحص المخزون
     const stock = p.stock !== undefined ? parseInt(p.stock) : 10;
     const isOut = stock <= 0;
 
@@ -183,9 +187,20 @@ function quickAddToCart(id, e) {
 // ---------- صفحة تفاصيل المنتج (بها معرض الصور والمخزون) ----------
 function renderProductDetails(id) {
   const productsList = getActiveProducts();
-  const product = productsList.find(p => p.id === id) || productsList[0];
   const el = document.getElementById("view-product");
-  if (!el || !product) return;
+  if (!el) return;
+
+  // التعديل: التأكد من التطابق التام وتفادي عرض منتج وهمي أثناء التحميل
+  const product = productsList.find(p => String(p.id) === String(id));
+
+  // لو البيانات لسه بتحمل من فايربيس (في حالة عمل تحديث للصفحة)
+  if (!product) {
+    el.innerHTML = `
+      <div class="container" style="text-align:center; padding:100px 20px;">
+        <h2 style="color:var(--primary);">جاري تحميل تفاصيل المنتج... ⏳</h2>
+      </div>`;
+    return;
+  }
 
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
   const productImages = (product.images && product.images.length > 0) ? product.images : [product.image || 'assets/logo.jpg'];
@@ -768,7 +783,7 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
-// ---------- النزول المباشر والسلس للأقسام - تم تصحيح مشكلة الإخفاء الإجباري هنا ----------
+// ---------- النزول المباشر والسلس للأقسام ----------
 function scrollToSection(sectionId) {
   closeMobileMenu();
   const homeView = document.getElementById("view-home");
@@ -776,7 +791,7 @@ function scrollToSection(sectionId) {
   if (homeView && !homeView.classList.contains("active")) {
     document.querySelectorAll(".view").forEach(v => {
       v.classList.remove("active");
-      v.style.display = ""; // هذا السطر يحل المشكلة جذرياً
+      v.style.display = ""; 
     });
     homeView.classList.add("active");
   }
