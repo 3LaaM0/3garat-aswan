@@ -2,9 +2,10 @@
 // التطبيق الرئيسي - متجر WT Store الاحترافي
 // ============================================
 
-// تنظيف أية منتجات قديمة محفوضة في الذاكرة المحلية لمتصفح الزبون
+// تنظيف أية منتجات قديمة محفوضة في الذاكرة المحلية
 localStorage.removeItem('wt_custom_products');
 
+// شرط التحقق الصارم من الأرقام المصرية (11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015)
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
 const EGYPT_GOVERNORATES = [
@@ -15,6 +16,7 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
+// حقن أنيميشن وتنسيقات شبكة المنتجات
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
@@ -34,6 +36,7 @@ if (!document.getElementById("page-motion-styles")) {
   document.head.appendChild(style);
 }
 
+// السلايدر المباشر بالصفحة الرئيسية
 let currentSlide = 0;
 function moveSlide(direction) {
   const slides = document.querySelectorAll('.slide');
@@ -79,11 +82,13 @@ function renderView(view, params) {
   executeViewRender(view, params);
 }
 
+// تنفيذ رندر الصفحة المحددة (تم إصلاح استدعاء صفحة النجاح هنا)
 function executeViewRender(view, params) {
   if (view === "products") renderProductGrid(window._currentCat || 'الكل');
   if (view === "product") renderProductDetails(params.id);
   if (view === "cart") renderCartView();
   if (view === "checkout") renderCheckoutView();
+  if (view === "success") renderSuccessView();
   if (view === "myorders") renderMyOrdersView();
 }
 
@@ -411,13 +416,14 @@ function renderCartView() {
     </div>`;
 }
 
+// ---------- صفحة الدفع والتشيك أوت ----------
 function renderCheckoutView() {
   const el = document.getElementById("view-checkout");
   if (!el) return;
   const items = Cart.detailedItems();
 
   if (items.length === 0) {
-    el.innerHTML = `<div class="container" style="text-align:center; padding:50px;"><p>السلة فارغة</p></div>`;
+    el.innerHTML = `<div class="container" style="text-align:center; padding:50px;"><p>السلة فارغة، أضف منتجات أولاً.</p></div>`;
     return;
   }
 
@@ -426,16 +432,39 @@ function renderCheckoutView() {
       <h1 class="page-title">إتمام الطلب</h1>
       <div class="checkout-layout">
         <form id="checkoutForm" class="checkout-form">
-          <div class="form-group"><label>الاسم الكامل</label><input type="text" id="fName"><span class="error" id="err-fName"></span></div>
-          <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="fPhone" maxlength="11"><span class="error" id="err-fPhone"></span></div>
-          <div class="form-group"><label>رقم واتساب</label><input type="tel" id="fWhatsapp" maxlength="11"><span class="error" id="err-fWhatsapp"></span></div>
+          <div class="form-group">
+            <label>الاسم الكامل</label>
+            <input type="text" id="fName" placeholder="مثال: أحمد محمد">
+            <span class="error" id="err-fName" style="color:var(--danger); font-size:12px; font-weight:bold;"></span>
+          </div>
+          <div class="form-group">
+            <label>رقم الهاتف المصرح به (11 رقم يبدأ بـ 01)</label>
+            <input type="tel" id="fPhone" placeholder="01xxxxxxxxx" maxlength="11" inputmode="numeric">
+            <span class="error" id="err-fPhone" style="color:var(--danger); font-size:12px; font-weight:bold;"></span>
+          </div>
+          <div class="form-group">
+            <label>رقم واتساب (11 رقم يبدأ بـ 01)</label>
+            <input type="tel" id="fWhatsapp" placeholder="01xxxxxxxxx" maxlength="11" inputmode="numeric">
+            <span class="error" id="err-fWhatsapp" style="color:var(--danger); font-size:12px; font-weight:bold;"></span>
+          </div>
           <div class="form-group">
             <label>المحافظة</label>
-            <select id="fProvince"><option value="">اختر المحافظة</option>${EGYPT_GOVERNORATES.map(gov => `<option value="${gov}">${gov}</option>`).join("")}</select>
-            <span class="error" id="err-fProvince"></span>
+            <select id="fProvince">
+              <option value="">اختر المحافظة</option>
+              ${EGYPT_GOVERNORATES.map(gov => `<option value="${gov}">${gov}</option>`).join("")}
+            </select>
+            <span class="error" id="err-fProvince" style="color:var(--danger); font-size:12px; font-weight:bold;"></span>
           </div>
-          <div class="form-group"><label>المدينة</label><input type="text" id="fCity"><span class="error" id="err-fCity"></span></div>
-          <div class="form-group"><label>العنوان بالتفصيل</label><textarea id="fAddress" rows="3"></textarea><span class="error" id="err-fAddress"></span></div>
+          <div class="form-group">
+            <label>المدينة</label>
+            <input type="text" id="fCity" placeholder="مثال: مدينة نصر">
+            <span class="error" id="err-fCity" style="color:var(--danger); font-size:12px; font-weight:bold;"></span>
+          </div>
+          <div class="form-group">
+            <label>العنوان بالتفصيل</label>
+            <textarea id="fAddress" rows="3" placeholder="اسم الشارع، رقم المبنى..."></textarea>
+            <span class="error" id="err-fAddress" style="color:var(--danger); font-size:12px; font-weight:bold;"></span>
+          </div>
           <div class="form-group">
             <label>طريقة الدفع</label>
             <select id="fPaymentMethod" style="width: 100%; padding: 12px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px;">
@@ -456,12 +485,32 @@ function renderCheckoutView() {
   setTimeout(() => {
     const btn = document.getElementById("confirmOrderBtn");
     if (btn) btn.onclick = executeOrderSubmission;
+
+    // تصفية المدخلات لتكون أرقاماً فقط للواتساب والهاتف
+    ["fPhone", "fWhatsapp"].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/[^0-9]/g, "").slice(0, 11);
+        });
+      }
+    });
   }, 100);
 }
 
+// تنفيذ تأكيد الطلب وفحص الأرقام المصرية بصرامة
 async function executeOrderSubmission(e) {
   if (e) e.preventDefault();
-  const fields = { fName: "أدخل الاسم", fPhone: "أدخل الهاتف", fWhatsapp: "أدخل الواتساب", fProvince: "اختر المحافظة", fCity: "أدخل المدينة", fAddress: "أدخل العنوان" };
+
+  const fields = {
+    fName: "يرجى إدخال الاسم الكامل",
+    fPhone: "يرجى إدخال رقم الهاتف",
+    fWhatsapp: "يرجى إدخال رقم واتساب",
+    fProvince: "يرجى اختيار المحافظة",
+    fCity: "يرجى إدخال المدينة",
+    fAddress: "يرجى إدخال العنوان بالتفصيل"
+  };
+
   let valid = true;
   const values = {};
   for (const [id, msg] of Object.entries(fields)) {
@@ -469,22 +518,46 @@ async function executeOrderSubmission(e) {
     const errEl = document.getElementById(`err-${id}`);
     if (input) {
       values[id] = input.value.trim();
-      if (!values[id]) { if (errEl) errEl.textContent = msg; valid = false; }
-      else { if (errEl) errEl.textContent = ""; }
+      if (!values[id]) {
+        if (errEl) errEl.textContent = msg;
+        valid = false;
+      } else {
+        if (errEl) errEl.textContent = "";
+      }
     }
   }
+
+  // فحص صارم للأرقام المصرية (يجب أن تكون 11 رقماً وتبدأ بـ 01)
+  ["fPhone", "fWhatsapp"].forEach(id => {
+    const errEl = document.getElementById(`err-${id}`);
+    if (values[id] && !EGY_PHONE_REGEX.test(values[id])) {
+      if (errEl) errEl.textContent = "يرجى إدخال رقم مصري صحيح (11 رقم يبدأ بـ 01)";
+      valid = false;
+    }
+  });
+
   if (!valid) return;
+
+  const paymentMethod = document.getElementById("fPaymentMethod") ? document.getElementById("fPaymentMethod").value : "الدفع عند الاستلام";
 
   const order = {
     orderNumber: "QR-" + Math.floor(100000 + Math.random() * 900000),
-    name: values.fName, phone: values.fPhone, whatsapp: values.fWhatsapp,
-    province: values.fProvince, city: values.fCity, address: values.fAddress,
-    paymentMethod: document.getElementById("fPaymentMethod").value,
-    total: Cart.total(), items: Cart.detailedItems(), date: new Date().toLocaleDateString("ar-EG"), status: "بانتظار التأكيد", createdAt: Date.now()
+    name: values.fName,
+    phone: values.fPhone,
+    whatsapp: values.fWhatsapp,
+    province: values.fProvince,
+    city: values.fCity,
+    address: values.fAddress,
+    paymentMethod: paymentMethod,
+    total: Cart.total(),
+    items: Cart.detailedItems(),
+    date: new Date().toLocaleDateString("ar-EG"),
+    status: "بانتظار التأكيد",
+    createdAt: Date.now()
   };
 
   if (typeof firebase !== 'undefined') {
-    try { await firebase.firestore().collection("orders").add(order); } catch (err) { console.error(err); }
+    try { await firebase.firestore().collection("orders").add(order); } catch (err) { console.error("خطأ رفع الطلب للسحابة:", err); }
   }
 
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
@@ -496,18 +569,54 @@ async function executeOrderSubmission(e) {
   navigate("success");
 }
 
+// ---------- صفحة نجاح الطلب (تمت معالجة وعرض البيانات كاملاً) ----------
 function renderSuccessView(order) {
   order = order || window._lastOrder;
   const el = document.getElementById("view-success");
   if (!el) return;
+
+  if (!order) {
+    el.innerHTML = `
+      <div class="container" style="text-align:center; padding:60px 20px;">
+        <p style="font-size:18px; color:var(--text-muted);">لا يوجد طلب حديث لعرضه.</p>
+        <button class="btn btn-primary" onclick="navigate('products')" style="margin-top:15px;">تسوق الآن</button>
+      </div>`;
+    return;
+  }
+
+  let paymentInstructions = "";
+  if (order.paymentMethod === "فودافون كاش") {
+    paymentInstructions = `<div style="background:rgba(239,68,68,0.1); color:#ef4444; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #ef4444;">
+      <strong>تعليمات الدفع:</strong> برجاء تحويل مبلغ ${order.total} ج.م إلى رقم فودافون كاش الخاص بنا والتواصل معنا لتأكيد التحويل.
+    </div>`;
+  } else if (order.paymentMethod === "إنستا باي (InstaPay)") {
+    paymentInstructions = `<div style="background:rgba(168,85,247,0.1); color:#a855f7; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #a855f7;">
+      <strong>تعليمات الدفع:</strong> برجاء تحويل مبلغ ${order.total} ج.م عبر إنستا باي والتواصل معنا لتأكيد التحويل.
+    </div>`;
+  }
+
+  const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
+
   el.innerHTML = `
-    <div class="container success-view" style="text-align:center; padding:50px 20px;">
-      <h1>🎉 تم استلام طلبك بنجاح!</h1>
-      <p>رقم الطلب: ${order ? order.orderNumber : ''}</p>
-      <button class="btn btn-primary" onclick="navigate('myorders')" style="margin-top:20px;">عرض طلباتي</button>
+    <div class="container success-view" style="text-align:center; padding:50px 20px; max-width:600px; margin:0 auto;">
+      <div style="font-size: 60px; margin-bottom: 15px;">🎉</div>
+      <h1 style="margin-bottom: 20px;">تم استلام طلبك بنجاح</h1>
+      <div class="success-card" style="background:var(--bg-card); padding:25px; border-radius:12px; border:1px solid var(--border); text-align:right;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold;"><span>رقم الطلب:</span><span style="color:var(--primary);">${order.orderNumber}</span></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>الاسم:</span><span>${order.name}</span></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>طريقة الدفع:</span><span>${order.paymentMethod || 'الدفع عند الاستلام'}</span></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold; font-size:18px;"><span>الإجمالي:</span><span style="color:#10b981;">${order.total} ${currency}</span></div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>الحالة:</span><span style="color:#f59e0b; font-weight:bold;">بانتظار التأكيد</span></div>
+        ${paymentInstructions}
+      </div>
+      <div style="display:flex; gap:15px; justify-content:center; margin-top:25px;">
+        <button class="btn btn-primary btn-lg" onclick="navigate('myorders')">عرض طلباتي</button>
+        <button class="btn btn-outline btn-lg" onclick="navigate('home')">العودة للرئيسية</button>
+      </div>
     </div>`;
 }
 
+// ---------- قسم طلباتي ----------
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
