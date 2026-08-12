@@ -105,7 +105,6 @@ function initCloudProducts() {
 
     const db = firebase.firestore();
     
-    // جلب المنتجات حياً من السحابة
     db.collection("products").onSnapshot((snapshot) => {
       cloudProducts = [];
       snapshot.forEach((doc) => {
@@ -121,7 +120,6 @@ function initCloudProducts() {
       console.error("خطأ في جلب المنتجات السحابية:", error);
     });
 
-    // جلب الطلبات حياً لتحديث حالات الطلبات للعميل فوراً عند تغييرها من الأدمن
     db.collection("orders").onSnapshot((snapshot) => {
       cloudOrders = [];
       snapshot.forEach((doc) => {
@@ -134,7 +132,6 @@ function initCloudProducts() {
   }
 }
 
-// تحديث إحصائيات وعداد المنتجات حياً
 function updateProductCounts() {
   const allProds = getActiveProducts();
   const count = allProds.length;
@@ -150,7 +147,6 @@ function getActiveProducts() {
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
 
-// دالة فتح قسم معين مباشرة من الرئيسية
 window.openCategory = function(cat) {
   window._currentCat = cat;
   navigate('products');
@@ -159,7 +155,6 @@ window.openCategory = function(cat) {
   }, 50);
 };
 
-// تصفية الأقسام (سماعات، شواحن، وصلات)
 window.filterCategory = function(cat) {
   window._currentCat = cat;
   document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
@@ -221,7 +216,7 @@ function quickAddToCart(id, e) {
   showToast("تمت إضافة المنتج إلى السلة بنجاح 🛍️");
 }
 
-// ---------- صفحة تفاصيل المنتج (تم تصحيح الخطأ الإملائي فيها) ----------
+// ---------- صفحة تفاصيل المنتج مع الأسهم والتنقل والتقليب التلقائي ----------
 function renderProductDetails(id) {
   const productsList = getActiveProducts();
   const el = document.getElementById("view-product");
@@ -240,6 +235,10 @@ function renderProductDetails(id) {
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
   const productImages = (product.images && product.images.length > 0) ? product.images : [product.image || 'assets/logo.jpg'];
   
+  // حفظ صور المنتج الحالية ومؤشر الصورة
+  window._detailImages = productImages;
+  window._detailImgIndex = 0;
+
   const stock = product.stock !== undefined ? parseInt(product.stock) : 10;
   const isOut = stock <= 0;
   const currency = typeof STORE_CONFIG !== 'undefined' ? STORE_CONFIG.currency : 'ج.م';
@@ -249,18 +248,24 @@ function renderProductDetails(id) {
     : `<button class="btn btn-outline btn-lg" onclick="addDetailToCart(${product.id})">إضافة إلى السلة</button>
        <button class="btn btn-primary btn-lg" onclick="buyNow(${product.id})">شراء الآن</button>`;
 
+  const arrowsHtml = productImages.length > 1 ? `
+    <button class="slider-btn prev" onclick="moveDetailImage(-1)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 5;">❮</button>
+    <button class="slider-btn next" onclick="moveDetailImage(1)" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 5;">❯</button>
+  ` : '';
+
   el.innerHTML = `
     <div class="container product-details">
       <button class="back-btn" onclick="navigate('products')">← العودة للمنتجات</button>
       <div class="details-grid">
         <div class="details-gallery">
-          <div class="details-image" style="margin-bottom: 12px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card);">
+          <div class="details-image" style="position: relative; margin-bottom: 12px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card);">
             <img id="mainProductImg" src="${productImages[0]}" alt="${product.name}" style="width: 100%; height: 350px; object-fit: contain;" onerror="this.src='assets/logo.jpg'">
+            ${arrowsHtml}
           </div>
           ${productImages.length > 1 ? `
             <div class="gallery-thumbs" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
               ${productImages.map((imgSrc, idx) => `
-                <img src="${imgSrc}" onclick="changeMainImage('${imgSrc}', this)" style="width: 70px; height: 70px; min-width: 70px; object-fit: contain; border-radius: 8px; border: 2px solid ${idx === 0 ? '#10b981' : 'var(--border)'}; cursor: pointer; background: var(--bg-card); padding: 4px; transition: border-color 0.2s;" alt="صورة مصغرة">
+                <img src="${imgSrc}" onclick="changeMainImageByIndex(${idx})" class="detail-thumb" style="width: 70px; height: 70px; min-width: 70px; object-fit: contain; border-radius: 8px; border: 2px solid ${idx === 0 ? '#10b981' : 'var(--border)'}; cursor: pointer; background: var(--bg-card); padding: 4px; transition: border-color 0.2s;" alt="صورة مصغرة">
               `).join('')}
             </div>
           ` : ''}
@@ -296,17 +301,45 @@ function renderProductDetails(id) {
     </div>
   `;
   window._detailQty = 1;
+
+  // تشغيل التقليب التلقائي للصور كل 4 ثوانٍ إذا كان للمنتج أكثر من صورة
+  if (window._detailImgInterval) clearInterval(window._detailImgInterval);
+  if (productImages.length > 1) {
+    window._detailImgInterval = setInterval(() => {
+      moveDetailImage(1);
+    }, 4000);
+  }
 }
 
-window.changeMainImage = function(src, thumbEl) {
-  const mainImg = document.getElementById('mainProductImg');
-  if (mainImg) mainImg.src = src;
-  if (thumbEl) {
-    const thumbs = thumbEl.parentElement.querySelectorAll('img');
-    thumbs.forEach(t => t.style.borderColor = 'var(--border)');
-    thumbEl.style.borderColor = '#10b981';
-  }
+// دالة تغيير الصورة بالضغط المباشر على الصور المصغرة
+window.changeMainImageByIndex = function(index) {
+  if (!window._detailImages || !window._detailImages.length) return;
+  window._detailImgIndex = index;
+  updateDetailImageDisplay();
 };
+
+// دالة التنقل بالأسهم (يمين ويسار)
+window.moveDetailImage = function(step) {
+  if (!window._detailImages || !window._detailImages.length) return;
+  window._detailImgIndex = (window._detailImgIndex + step + window._detailImages.length) % window._detailImages.length;
+  updateDetailImageDisplay();
+};
+
+// تحديث عرض الصورة والحد الخارجي للصورة النشطة
+function updateDetailImageDisplay() {
+  const mainImg = document.getElementById('mainProductImg');
+  if (mainImg && window._detailImages && window._detailImages[window._detailImgIndex]) {
+    mainImg.src = window._detailImages[window._detailImgIndex];
+  }
+  const thumbs = document.querySelectorAll('.detail-thumb');
+  thumbs.forEach((t, idx) => {
+    if (idx === window._detailImgIndex) {
+      t.style.borderColor = '#10b981';
+    } else {
+      t.style.borderColor = 'var(--border)';
+    }
+  });
+}
 
 function changeDetailQty(delta) {
   window._detailQty = Math.max(1, (window._detailQty || 1) + delta);
@@ -475,7 +508,6 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- قسم "طلباتي" (تمت إعادتها كاملة بالتفاصيل وتزامن السحابة) ----------
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
@@ -496,7 +528,6 @@ function renderMyOrdersView() {
     return;
   }
 
-  // مزامنة حالة الطلبات من Firebase لو الأدمن غيرها في السحابة
   savedOrders = savedOrders.map(localOrder => {
     const cloudMatch = cloudOrders.find(co => co.orderNumber === localOrder.orderNumber);
     if (cloudMatch && cloudMatch.status) {
@@ -509,7 +540,7 @@ function renderMyOrdersView() {
 
   let ordersHtml = savedOrders.slice().reverse().map(order => {
     const status = order.status || "بانتظار التأكيد";
-    let statusColor = "#f59e0b"; // برتقالي
+    let statusColor = "#f59e0b"; 
     let statusBg = "rgba(245, 158, 11, 0.1)";
 
     if (status === "جاري التجهيز") { statusColor = "#2563eb"; statusBg = "rgba(37, 99, 235, 0.1)"; }
