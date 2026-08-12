@@ -12,7 +12,7 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
-// حقن أنيميشن النقطة النابضة فقط
+// حقن أنيميشن وتنسيق شبكة المنتجات لتبقى صغيرة ومرتبة حتى لو كان منتجاً واحداً
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
@@ -21,6 +21,12 @@ if (!document.getElementById("page-motion-styles")) {
       0% { transform: scale(0.95); opacity: 1; }
       50% { transform: scale(1.4); opacity: 0.4; }
       100% { transform: scale(0.95); opacity: 1; }
+    }
+    #productsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 280px));
+      justify-content: center;
+      gap: 20px;
     }
   `;
   document.head.appendChild(style);
@@ -57,7 +63,6 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
-// دالة العرض بدقة ومنع النزول الخاطئ للأسفل
 function renderView(view, params) {
   if (view === "products" || view === "productsSection") {
     scrollToSection("productsSection");
@@ -72,14 +77,12 @@ function renderView(view, params) {
 
   const target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
   
-  // إزالة أي أوامر إخفاء إجبارية من كل الصفحات
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
     v.style.display = ""; 
   });
   
   target.classList.add("active");
-
   executeViewRender(view, params);
 }
 
@@ -90,7 +93,6 @@ function executeViewRender(view, params) {
   if (view === "myorders") renderMyOrdersView();
 }
 
-// ---------- جلب المنتجات السحابية الحية ----------
 let cloudProducts = [];
 
 function initCloudProducts() {
@@ -114,12 +116,11 @@ function initCloudProducts() {
         cloudProducts.push({ docId: doc.id, ...doc.data() });
       });
       
-      // التعديل: تحديث صفحة المنتج الحالية فور وصول البيانات لتجنب خطأ الريفريش
       const { view, params } = parseHash();
       if (view === "product" && params.id) {
         renderProductDetails(params.id); 
       }
-      renderProductGrid(); 
+      renderProductGrid('الكل'); 
     }, (error) => {
       console.error("خطأ في جلب المنتجات السحابية:", error);
     });
@@ -135,15 +136,20 @@ function getActiveProducts() {
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
 
-// ---------- عرض المنتجات بالرئيسية مع فحص المخزون ----------
-function renderProductGrid() {
+// ---------- عرض المنتجات مع الأقسام (سماعات، شواحن، وصلات) ----------
+function renderProductGrid(selectedCategory = 'الكل') {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
 
-  const productsList = getActiveProducts();
+  let productsList = getActiveProducts();
+
+  // تصفية المنتجات حسب القسم المختار
+  if (selectedCategory && selectedCategory !== 'الكل') {
+    productsList = productsList.filter(p => p.category === selectedCategory);
+  }
 
   if (!productsList || productsList.length === 0) {
-    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات معروضة حالياً.</p>`;
+    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات متوفرة في هذا القسم حالياً.</p>`;
     return;
   }
 
@@ -157,7 +163,7 @@ function renderProductGrid() {
       : `<button class="btn btn-primary" onclick="quickAddToCart(${p.id}, event)" style="flex:1;">إضافة للسلة</button>`;
 
     return `
-      <div class="product-card fade-in-up">
+      <div class="product-card fade-in-up" style="width: 100%;">
         <div class="product-image" onclick="navigate('product', {id: ${p.id}})" style="cursor: pointer;">
           <img src="${imgSrc}" alt="${p.name}" loading="lazy" onerror="this.src='assets/logo.jpg'">
         </div>
@@ -184,16 +190,13 @@ function quickAddToCart(id, e) {
   showToast("تمت إضافة المنتج إلى السلة بنجاح 🛍️");
 }
 
-// ---------- صفحة تفاصيل المنتج (بها معرض الصور والمخزون) ----------
 function renderProductDetails(id) {
   const productsList = getActiveProducts();
   const el = document.getElementById("view-product");
   if (!el) return;
 
-  // التعديل: التأكد من التطابق التام وتفادي عرض منتج وهمي أثناء التحميل
   const product = productsList.find(p => String(p.id) === String(id));
 
-  // لو البيانات لسه بتحمل من فايربيس (في حالة عمل تحديث للصفحة)
   if (!product) {
     el.innerHTML = `
       <div class="container" style="text-align:center; padding:100px 20px;">
@@ -215,7 +218,7 @@ function renderProductDetails(id) {
 
   el.innerHTML = `
     <div class="container product-details">
-      <button class="back-btn" onclick="navigate('home')">← العودة للمنتجات</button>
+      <button class="back-btn" onclick="navigate('home')">← العودة للرئيسية</button>
       <div class="details-grid">
         <div class="details-gallery">
           <div class="details-image" style="margin-bottom: 12px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card);">
@@ -271,7 +274,6 @@ function renderProductDetails(id) {
   window._detailQty = 1;
 }
 
-// دالة تقليب الصور في تفاصيل المنتج
 window.changeMainImage = function(src, thumbEl) {
   const mainImg = document.getElementById('mainProductImg');
   if (mainImg) mainImg.src = src;
@@ -279,7 +281,7 @@ window.changeMainImage = function(src, thumbEl) {
   if (thumbEl) {
     const thumbs = thumbEl.parentElement.querySelectorAll('img');
     thumbs.forEach(t => t.style.borderColor = 'var(--border)');
-    thumbEl.style.borderColor = '#10b981'; // إطار بلون مميز للصورة النشطة
+    thumbEl.style.borderColor = '#10b981';
   }
 };
 
@@ -299,7 +301,6 @@ function buyNow(id) {
   navigate("checkout");
 }
 
-// ---------- السلة ----------
 function renderCartView() {
   const el = document.getElementById("view-cart");
   if (!el) return;
@@ -358,7 +359,6 @@ function renderCartView() {
     </div>`;
 }
 
-// ---------- الدفع والبرومو كود وطرق الدفع ----------
 function renderCheckoutView() {
   const el = document.getElementById("view-checkout");
   if (!el) return;
@@ -377,7 +377,6 @@ function renderCheckoutView() {
     return;
   }
 
-  // تصفير الخصم المطبق عند دخول صفحة التشيك أوت
   window._appliedPromo = null;
 
   el.innerHTML = `
@@ -421,7 +420,6 @@ function renderCheckoutView() {
             <span class="error" id="err-fAddress"></span>
           </div>
 
-          <!-- إضافة طرق الدفع -->
           <div class="form-group">
             <label>طريقة الدفع</label>
             <select id="fPaymentMethod" style="width: 100%; padding: 12px 14px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px;">
@@ -431,7 +429,6 @@ function renderCheckoutView() {
             </select>
           </div>
 
-          <!-- البرومو كود -->
           <div class="form-group" style="background:var(--bg-body); padding:15px; border-radius:10px; border:1px dashed var(--border); margin-top: 20px;">
             <label>هل لديك كود خصم؟</label>
             <div style="display:flex; gap:10px;">
@@ -454,7 +451,6 @@ function renderCheckoutView() {
       </div>
     </div>`;
 
-  // تحديث السعر النهائي عند الفتح
   updateCheckoutSummary();
 
   setTimeout(() => {
@@ -472,7 +468,6 @@ function renderCheckoutView() {
   }, 100);
 }
 
-// دالة التحقق من البرومو كود وتطبيقه
 window.applyPromo = async function() {
   const codeInput = document.getElementById('promoInput');
   const msgEl = document.getElementById('promoMsg');
@@ -507,7 +502,6 @@ window.applyPromo = async function() {
   }
 };
 
-// تحديث الإجمالي في التشيك أوت ليعكس الخصم
 window.updateCheckoutSummary = function() {
   const container = document.getElementById('checkoutSummaryContainer');
   if (!container) return;
@@ -602,7 +596,6 @@ async function executeOrderSubmission(e) {
       const db = firebase.firestore();
       await db.collection("orders").add(order);
       
-      // خصم الكمية من المخزون تلقائياً بعد الشراء
       for (const item of order.items) {
         const pRef = await db.collection("products").where("id", "==", item.id).get();
         if (!pRef.empty) {
@@ -666,7 +659,6 @@ ${itemsText}
   setTimeout(() => renderSuccessView(order), 50);
 }
 
-// ---------- صفحة نجاح الطلب ----------
 function renderSuccessView(order) {
   order = order || window._lastOrder;
   const el = document.getElementById("view-success");
@@ -706,7 +698,6 @@ function renderSuccessView(order) {
     </div>`;
 }
 
-// ---------- قسم "طلباتي" ----------
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
@@ -758,7 +749,6 @@ function renderMyOrdersView() {
   `;
 }
 
-// ---------- Toast ----------
 let toastTimeout;
 function showToast(message) {
   const toast = document.getElementById("toast");
@@ -769,7 +759,6 @@ function showToast(message) {
   toastTimeout = setTimeout(() => toast.classList.remove("show"), 2800);
 }
 
-// ---------- القائمة الجوال ----------
 function toggleMobileMenu() {
   const menu = document.getElementById("mobileMenu");
   const hamburger = document.getElementById("hamburger");
@@ -783,7 +772,6 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
-// ---------- النزول المباشر والسلس للأقسام ----------
 function scrollToSection(sectionId) {
   closeMobileMenu();
   const homeView = document.getElementById("view-home");
@@ -804,13 +792,11 @@ function scrollToSection(sectionId) {
   }, 50);
 }
 
-// ---------- الاستماع لتغيير الهاش وتشغيل التوجيه ----------
 window.addEventListener("hashchange", () => {
   const { view, params } = parseHash();
   renderView(view, params);
 });
 
-// ---------- بدء التشغيل ----------
 document.addEventListener("DOMContentLoaded", () => {
   initCloudProducts(); 
   
