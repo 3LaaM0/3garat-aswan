@@ -1,5 +1,5 @@
- ============================================
-   WT Store - Premium Dark Theme
+/* ============================================
+   WT Store - Premium Dark Theme (Full & Fixed)
    ============================================ */
 :root {
   --bg-primary: #0a0a0a;
@@ -32,7 +32,7 @@ a { text-decoration: none; color: inherit; }
 ul { list-style: none; }
 img { max-width: 100%; display: block; }
 button { font-family: inherit; cursor: pointer; border: none; }
-input, textarea { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -68,7 +68,7 @@ input, textarea { font-family: inherit; }
 .logo-text { font-weight: 800; font-size: 18px; letter-spacing: .5px; }
 .logo-text span { color: var(--accent); }
 
-/* القائمة الرئيسية في المنتصف المطلق */
+/* القائمة الرئيسية في المنتصف المطلق للشاشات الكبيرة */
 .nav-links {
   position: absolute;
   left: 50%;
@@ -88,13 +88,12 @@ input, textarea { font-family: inherit; }
 .nav-links li a:hover { color: var(--text-light); transform: translateY(-1px); }
 .nav-links li a.active { color: var(--accent); }
 
-/* الأزرار والسلة على اليسار تماماً */
+/* الأزرار والسلة */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 18px;
   z-index: 2;
-  margin-right: 0;
 }
 .cart-btn { position: relative; display: flex; align-items: center; cursor: pointer; font-size: 22px; }
 .cart-count {
@@ -151,7 +150,7 @@ input, textarea { font-family: inherit; }
 .section-header h2 { font-size: clamp(26px, 4vw, 36px); font-weight: 800; margin-top: 8px; }
 .section-header p { color: var(--text-muted); margin-top: 10px; }
 
-/* ---------- Products Grid (في المنتصف) ---------- */
+/* ---------- Products Grid ---------- */
 .products-grid, #productsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -185,7 +184,7 @@ input, textarea { font-family: inherit; }
 .product-details { padding: 50px 0 80px; }
 .back-btn {
   background: transparent; color: var(--text-muted); font-weight: 700;
-  margin-bottom: 30px; display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 30px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
 }
 .back-btn:hover { color: var(--accent); }
 .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: start; }
@@ -207,16 +206,17 @@ input, textarea { font-family: inherit; }
 .page-title { font-size: 28px; font-weight: 800; margin: 40px 0 30px; }
 .cart-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; align-items: start; padding-bottom: 70px; }
 .cart-row {
-  display: grid; grid-template-columns: 70px 1fr auto auto auto; align-items: center; gap: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
   background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px;
 }
 .cart-row img { width: 70px; height: 70px; object-fit: contain; background: #0d0d0d; border-radius: 10px; padding: 8px; }
+.cart-row-info { flex: 1; text-align: right; }
 .cart-row-info h4 { font-size: 15px; margin-bottom: 6px; }
 .cart-qty { display: flex; align-items: center; gap: 10px; }
 .cart-qty button { width: 30px; height: 30px; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-light); }
 .cart-qty button:hover { border-color: var(--accent); color: var(--accent); }
 .cart-row-total { font-weight: 800; color: var(--accent); font-size: 15px; }
-.remove-btn { background: transparent; color: var(--text-muted); font-size: 16px; }
+.remove-btn { background: transparent; color: var(--text-muted); font-size: 16px; cursor: pointer; }
 .remove-btn:hover { color: var(--danger); }
 
 .cart-summary {
@@ -240,11 +240,11 @@ input, textarea { font-family: inherit; }
 .form-group { margin-bottom: 18px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text-light); }
-input, textarea {
+input, textarea, select {
   width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-light);
   padding: 12px 14px; border-radius: 10px; font-size: 14.5px; transition: border-color .2s;
 }
-input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
 textarea { resize: vertical; }
 .error { color: var(--danger); font-size: 12.5px; display: block; margin-top: 6px; min-height: 16px; }
 
@@ -304,109 +304,47 @@ textarea { resize: vertical; }
 }
 
 @keyframes pageSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(24px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  0% { opacity: 0; transform: translateY(24px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ---------- Responsive ---------- */
+/* ==========================================================
+   Responsive & Mobile Fixes (تحسينات وتجاوب الموبايل)
+   ========================================================== */
 @media (max-width: 960px) {
   .products-grid { grid-template-columns: repeat(2, 1fr); }
   .details-grid, .cart-layout, .checkout-layout, .about-content { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 720px) {
-  .nav-links { display: none; }
+
+@media (max-width: 768px) {
+  /* إخفاء القائمة العادية وإظهار الهمبرجر بالموبايل */
+  .nav-links { display: none !important; }
   .hamburger { display: flex; }
-  .cart-row { grid-template-columns: 55px 1fr; grid-template-areas: "img info" "img qty" "img total"; }
-  .form-row { grid-template-columns: 1fr; }
-}
-@media (max-width: 480px) {
-  .products-grid { grid-template-columns: 1fr; }
-  .footer-grid { grid-template-columns: 1fr; }
-  .hero { padding: 60px 0 50px; }
-}
-/* إرجاع الهيدر للترتيب الصحيح */
-.header-inner {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  position: relative !important;
-}
+  .header-actions .btn { display: none; }
 
-.logo {
-  margin-left: 0 !important;
-}
+  .site-header { padding: 10px 0; }
+  .header-inner { padding: 0 15px; }
 
-/* القائمة في المنتصف بالضبط */
-.nav-links {
-  position: absolute !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  display: flex !important;
-  gap: 25px !important;
-  margin: 0 !important;
-}
-
-/* زر تسوق الآن والسلة على الشمال خالص */
-.header-actions {
-  margin-right: 0 !important;
-  margin-left: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 15px !important;
-}
-/* ===== تعديلات وتحسينات الموبايل (Mobile Responsive Fixes) ===== */
-@media screen and (max-width: 768px) {
-  /* تصغير الهيدر ومنع تداخل العناصر */
-  .site-header {
-    padding: 10px 0;
-  }
-  .header-inner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-  }
-  /* إخفاء الروابط العادية وإظهار قائمة الموبايل والهمبرجر */
-  .nav-links {
-    display: none !important;
-  }
-  .header-actions {
-    gap: 10px;
-  }
-  .header-actions .btn {
-    display: none; /* إخفاء زر تسوق الآن الزائد في الهيدر بالموبايل */
-  }
-
-  /* ظبط عرض صفحة السلة وملخص الطلب لتتناسب مع شاشة الموبايل */
-  .cart-layout {
-    grid-template-columns: 1fr !important;
-    gap: 15px !important;
-  }
+  /* ضبط صفحة السلة للموبايل لتظهر بشكل مرتب تماماً */
+  .cart-layout { grid-template-columns: 1fr !important; gap: 15px !important; }
   .cart-row {
     flex-direction: column;
     align-items: flex-start !important;
-    gap: 10px;
+    gap: 12px;
     text-align: right;
   }
-  .cart-row img {
-    width: 50px;
-    height: 50px;
-  }
-  .cart-qty {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  /* ظبط حاوية المحتوى الرئيسي بالموبايل */
-  .container {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
+  .cart-row img { width: 60px; height: 60px; }
+  .cart-qty { width: 100%; justify-content: space-between; }
+  .cart-row-total { width: 100%; text-align: left; }
+
+  .form-row { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr; text-align: center; }
+  .footer-grid .social-icons { justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .products-grid { grid-template-columns: 1fr; }
+  .hero { padding: 60px 0 50px; }
+  .hero h1 { font-size: 28px; }
 }
