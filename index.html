@@ -10,6 +10,76 @@
 <!-- مكتبة الأيقونات (FontAwesome) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  /* تنسيق السلايدر في الرئيسية */
+  .hero-slider {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    margin: 20px auto;
+    height: 380px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border, #222);
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+  }
+  .slide.active {
+    opacity: 1;
+  }
+  .slide-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 30px;
+    color: #fff;
+  }
+  .slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 10;
+  }
+  .slider-btn.prev { right: 15px; }
+  .slider-btn.next { left: 15px; }
+  
+  /* أزرار الأقسام */
+  .cat-btn {
+    padding: 10px 24px;
+    border-radius: 20px;
+    border: 1px solid var(--border, #333);
+    background: var(--bg-card, #111);
+    color: var(--text-main, #fff);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cat-btn.active, .cat-btn:hover {
+    background: #10b981;
+    color: #000;
+    border-color: #10b981;
+  }
+</style>
 </head>
 <body>
 
@@ -21,20 +91,19 @@
       <span class="logo-text">WT <span>Store</span></span>
     </div>
 
-    <!-- الروابط مع الإيموشنز والتنقل السلس المباشر -->
+    <!-- التنقل بين الصفحات المستقلة -->
     <ul class="nav-links">
-      <li><a href="#home" onclick="navigate('home')">🏠 الرئيسية</a></li>
-      <li><a href="#productsSection" onclick="scrollToSection('productsSection')">🛍️ المنتجات</a></li>
-      <li><a href="#aboutSection" onclick="scrollToSection('aboutSection')">ℹ️ من نحن</a></li>
-      <li><a href="#myorders" onclick="navigate('myorders')">📦 طلباتي</a></li>
+      <li><a onclick="navigate('home')" style="cursor:pointer;">🏠 الرئيسية</a></li>
+      <li><a onclick="navigate('products')" style="cursor:pointer;">🛍️ المنتجات</a></li>
+      <li><a onclick="scrollToSection('aboutSection')" style="cursor:pointer;">ℹ️ من نحن</a></li>
+      <li><a onclick="navigate('myorders')" style="cursor:pointer;">📦 طلباتي</a></li>
     </ul>
 
     <div class="header-actions">
-      <!-- زر السلة المظبوط مع الإيموشن -->
       <a class="cart-btn" onclick="navigate('cart')" style="cursor: pointer;">
         🛒<span class="cart-count" id="cartCount">0</span>
       </a>
-      <button class="btn btn-primary" onclick="scrollToSection('productsSection')">تسوق الآن</button>
+      <button class="btn btn-primary" onclick="navigate('products')">تسوق الآن</button>
       <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
         <span></span><span></span><span></span>
       </div>
@@ -45,7 +114,7 @@
 <!-- ===== Mobile Menu ===== -->
 <div class="mobile-menu" id="mobileMenu">
   <a onclick="navigate('home')">🏠 الرئيسية</a>
-  <a onclick="scrollToSection('productsSection')">🛍️ المنتجات</a>
+  <a onclick="navigate('products')">🛍️ المنتجات</a>
   <a onclick="scrollToSection('aboutSection')">ℹ️ من نحن</a>
   <a onclick="navigate('myorders')">📦 طلباتي</a>
   <a onclick="navigate('cart')">🛒 سلة التسوق</a>
@@ -53,43 +122,39 @@
   
 <main>
 
-  <!-- ===== الرئيسية ===== -->
+  <!-- ===== 1. الرئيسية (سلايدر صور/فيديوهات فقط بدون منتجات) ===== -->
   <div class="view active" id="view-home">
+    <div class="container" style="padding-top: 20px;">
+      
+      <!-- معرض الصور والفيديوهات المتحرك (Hero Slider) -->
+      <div class="hero-slider" id="heroSlider">
+        <button class="slider-btn prev" onclick="moveSlide(-1)">❮</button>
+        <button class="slider-btn next" onclick="moveSlide(1)">❯</button>
 
-    <section class="hero">
-      <div class="hero-bg" style="background-image:url('assets/cover.jpg')"></div>
-      <div class="hero-content">
-        <span class="hero-eyebrow">إلكترونيات أصلية بضمان</span>
-        <h1>تقنية تواكب <span class="accent">أسلوب حياتك</span></h1>
-        <p>سماعات، ساعات ذكية، ومكبرات صوت مختارة بعناية — جودة عالية وتصميم يلفت الأنظار.</p>
-        <div class="hero-actions">
-          <button class="btn btn-primary btn-lg" onclick="scrollToSection('productsSection')">تسوق الآن</button>
-          <button class="btn btn-outline btn-lg" onclick="scrollToSection('productsSection')">استكشف المنتجات</button>
+        <!-- السلايد الأول: صورة أو فيديو سماعات -->
+        <div class="slide active" style="background-image: url('assets/cover.jpg');">
+          <div class="slide-overlay">
+            <span style="color:#10b981; font-weight:bold;">🎧 أحدث السماعات اللاسلكية</span>
+            <h2 style="font-size:28px; margin:5px 0;">نقاء صوت عالي وتصميم عصري</h2>
+            <p style="color:#ccc; font-size:14px; margin-bottom:15px;">استمتع بأفضل تجربة استماع مع عزل الضوضاء وضمان حقيقي.</p>
+            <button class="btn btn-primary" style="width:fit-content;" onclick="navigate('products')">تصفح قسم السماعات</button>
+          </div>
+        </div>
+
+        <!-- السلايد الثاني: الشواحن والوصلات -->
+        <div class="slide" style="background-image: url('assets/cover.jpg');">
+          <div class="slide-overlay">
+            <span style="color:#10b981; font-weight:bold;">⚡ شواحن ووصلات أصلية</span>
+            <h2 style="font-size:28px; margin:5px 0;">شحن سريع وآمن 100%</h2>
+            <p style="color:#ccc; font-size:14px; margin-bottom:15px;">احمِ بطارية موبايلك مع أفضل الشواحن والوصلات المقاومة للقطع.</p>
+            <button class="btn btn-primary" style="width:fit-content;" onclick="navigate('products')">تصفح الشواحن والوصلات</button>
+          </div>
         </div>
       </div>
-    </section>
 
-    <!-- ===== قسم المنتجات مع الأقسام والعدد الديناميكي ===== -->
-    <section class="section" id="productsSection">
-      <div class="container">
-        <div class="section-header">
-          <span class="eyebrow">مختاراتنا</span>
-          <h2>منتجاتنا المميزة</h2>
-          <p id="productsCountText">جاري تحميل عدد المنتجات...</p>
-        </div>
+    </div>
 
-        <!-- أزرار الأقسام (سماعات، شواحن، وصلات، الكل) -->
-        <div class="categories-filter" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;">
-          <button class="btn btn-outline" onclick="renderProductGrid('الكل')">الكل</button>
-          <button class="btn btn-outline" onclick="renderProductGrid('سماعات')">سماعات</button>
-          <button class="btn btn-outline" onclick="renderProductGrid('شواحن')">شواحن</button>
-          <button class="btn btn-outline" onclick="renderProductGrid('وصلات')">وصلات</button>
-        </div>
-
-        <div class="products-grid" id="productsGrid"></div>
-      </div>
-    </section>
-
+    <!-- قسم من نحن في الرئيسية -->
     <section class="section about-section" id="aboutSection">
       <div class="container">
         <div class="about-content">
@@ -97,9 +162,8 @@
             <span class="eyebrow" style="color:var(--accent); font-weight:700; font-size:13px; letter-spacing:2px;">من نحن</span>
             <h2 style="font-size:30px; font-weight:800; margin:10px 0 18px;">WT Store لعشاق التقنية</h2>
             <p>في WT Store، نوفر لك أحدث الإكسسوارات التقنية بجودة عالية وأسعار مناسبة. نركز على اختيار منتجات موثوقة من العلامات المعروفة، مع تجربة شراء سهلة وسريعة من الطلب وحتى التوصيل.</p>
-            <p>هدفنا أن نكون وجهتك الأولى لكل ما يخص السماعات، الساعات الذكية، ومستلزمات الصوت.</p>
             <div class="about-stats">
-              <div><strong id="aboutProductsCount">4+</strong><span>منتجات مختارة</span></div>
+              <div><strong id="aboutProductsCount">0</strong><span>منتج متوفر</span></div>
               <div><strong>100%</strong><span>ضمان أصالة</span></div>
               <div><strong>24/7</strong><span>دعم عبر واتساب</span></div>
             </div>
@@ -110,22 +174,36 @@
         </div>
       </div>
     </section>
-
   </div>
 
-  <!-- ===== تفاصيل المنتج ===== -->
+  <!-- ===== 2. صفحة المنتجات المستقلة (تفتح فقط عند الضغط على "المنتجات") ===== -->
+  <div class="view" id="view-products">
+    <section class="section">
+      <div class="container">
+        <div class="section-header" style="text-align: center; margin-bottom: 25px;">
+          <h2>معرض المنتجات</h2>
+          <p id="productsCountText">جاري تحميل المنتجات...</p>
+        </div>
+
+        <!-- أزرار الأقسام الـ 3 المحددة -->
+        <div class="categories-filter" style="display: flex; gap: 12px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
+          <button class="cat-btn active" id="btn-cat-الكل" onclick="filterCategory('الكل')">الكل</button>
+          <button class="cat-btn" id="btn-cat-سماعات" onclick="filterCategory('سماعات')">🎧 قسم السماعات</button>
+          <button class="cat-btn" id="btn-cat-شواحن" onclick="filterCategory('شواحن')">🔌 قسم الشواحن</button>
+          <button class="cat-btn" id="btn-cat-وصلات" onclick="filterCategory('وصلات')">⚡ قسم الوصلات</button>
+        </div>
+
+        <!-- شبكة عرض المنتجات -->
+        <div class="products-grid" id="productsGrid"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== 3. باقي الصفحات ===== -->
   <div class="view" id="view-product"></div>
-
-  <!-- ===== السلة ===== -->
   <div class="view" id="view-cart"></div>
-
-  <!-- ===== الدفع ===== -->
   <div class="view" id="view-checkout"></div>
-
-  <!-- ===== نجاح الطلب ===== -->
   <div class="view" id="view-success"></div>
-
-  <!-- ===== قسم طلباتي السابقة ===== -->
   <div class="view" id="view-myorders"></div>
 
 </main>
@@ -137,18 +215,12 @@
       <div class="footer-brand">
         <img src="assets/logo.jpg" alt="WT Store">
         <p>وجهتك لأحدث الإكسسوارات التقنية بجودة عالية وتجربة شراء سهلة وموثوقة.</p>
-        <div class="social-icons" style="display: flex; gap: 15px; margin-top: 15px;">
-          <a id="footerFb" href="#" target="_blank" aria-label="Facebook" style="color: #fff; font-size: 20px;"><i class="fab fa-facebook-f"></i></a>
-          <a id="footerWa" href="#" target="_blank" aria-label="WhatsApp" style="color: #fff; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
-          <a id="footerIg" href="#" target="_blank" aria-label="Instagram" style="color: #fff; font-size: 20px;"><i class="fab fa-instagram"></i></a>
-        </div>
       </div>
       <div class="footer-col">
         <h4>روابط سريعة</h4>
         <ul>
           <li><a onclick="navigate('home')">الرئيسية</a></li>
-          <li><a onclick="scrollToSection('productsSection')">المنتجات</a></li>
-          <li><a onclick="scrollToSection('aboutSection')">من نحن</a></li>
+          <li><a onclick="navigate('products')">المنتجات</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -158,12 +230,6 @@
           <li><a onclick="navigate('cart')">🛒 سلة التسوق</a></li>
         </ul>
       </div>
-      <div class="footer-col">
-        <h4>تواصل معنا</h4>
-        <ul>
-          <li><a id="footerWa2" href="#" target="_blank">راسلنا عبر واتساب</a></li>
-        </ul>
-      </div>
     </div>
     <div class="footer-bottom">
       © <span id="year"></span> WT Store. جميع الحقوق محفوظة.
@@ -171,25 +237,15 @@
   </div>
 </footer>
 
-<!-- ===== أيقونة الواتساب العائمة ===== -->
 <div id="floating-whatsapp" style="position: fixed; bottom: 25px; left: 25px; z-index: 9999;">
-  <a href="https://wa.me/201000000000" target="_blank" aria-label="تواصل عبر واتساب" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background-color: #25d366; color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 32px; text-decoration: none; animation: pulse-whatsapp 2s infinite;">
+  <a href="https://wa.me/201000000000" target="_blank" aria-label="تواصل عبر واتساب" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background-color: #25d366; color: #fff; border-radius: 50%; font-size: 32px; text-decoration: none;">
     <i class="fab fa-whatsapp"></i>
   </a>
 </div>
 
-<style>
-@keyframes pulse-whatsapp {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
-}
-</style>
-
-<!-- ===== Toast ===== -->
 <div class="toast" id="toast"></div>
 
-<!-- مكتبات Firebase السحابية -->
+<!-- مكتبات Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
