@@ -41,7 +41,6 @@ function moveSlide(direction) {
   currentSlide = (currentSlide + direction + slides.length) % slides.length;
   slides[currentSlide].classList.add('active');
 }
-// تقليب تلقائي كل 5 ثواني
 setInterval(() => moveSlide(1), 5000);
 
 function navigate(view, params = {}) {
@@ -134,6 +133,15 @@ function getActiveProducts() {
   if (cloudProducts && cloudProducts.length > 0) return cloudProducts;
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
+
+// دالة فتح قسم معين مباشرة من الصفحة الرئيسية
+window.openCategory = function(cat) {
+  window._currentCat = cat;
+  navigate('products');
+  setTimeout(() => {
+    filterCategory(cat);
+  }, 50);
+};
 
 // تصفية الأقسام (سماعات، شواحن، وصلات)
 window.filterCategory = function(cat) {
@@ -248,7 +256,7 @@ function renderProductDetails(id) {
 
           <div class="product-price-row large">
             <span class="price">${product.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
-            <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
+            <span class="old-price">${product.oldPrice ? p.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
           </div>
 
           <p class="details-desc">${product.description || product.shortDesc || ''}</p>
