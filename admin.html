@@ -38,8 +38,53 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; transition: background 0.2s, color 0.2s; }
     body { background: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; }
 
+    /* شاشة تسجيل الدخول */
+    #loginScreen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-body);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .login-box {
+      background: var(--bg-card);
+      padding: 35px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+    .login-box h2 { margin-bottom: 20px; font-size: 22px; font-weight: 850; }
+    .login-box input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 15px;
+      background: var(--bg-body);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 15px;
+    }
+    .login-box button:hover { opacity: 0.9; }
+
     /* Sidebar */
-    .sidebar { width: 260px; background: var(--bg-card); border-left: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar { width: 260px; background: var(--bg-card); border-left: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; height: 100vh; position: sticky; top: 0; }
     .sidebar-brand { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 20px; padding: 0 12px 20px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
     .sidebar-brand span { color: var(--primary); }
     .theme-toggle { background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -99,166 +144,181 @@
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <i class="fa-solid fa-store" style="color: var(--primary);"></i>
-        <span>WT Store</span>
-      </div>
-      <button class="theme-toggle" onclick="toggleTheme()" title="تغيير الوضع"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
+  <!-- شاشة تسجيل الدخول -->
+  <div id="loginScreen" style="display: flex;">
+    <div class="login-box">
+      <h2>دخول لوحة التحكم</h2>
+      <input type="text" id="usernameInput" placeholder="اسم المستخدم">
+      <input type="password" id="passwordInput" placeholder="كلمة المرور">
+      <button onclick="attemptLogin()">تسجيل الدخول</button>
+      <p id="loginError" style="color:var(--danger); font-size:13px; margin-top:10px;"></p>
     </div>
-    <div class="nav-item active" id="btn-dashboard" onclick="showAdminTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> نظرة عامة</div>
-    <div class="nav-item" id="btn-products" onclick="showAdminTab('products')"><i class="fa-solid fa-box"></i> المنتجات والمخزون</div>
-    <div class="nav-item" id="btn-orders" onclick="showAdminTab('orders')"><i class="fa-solid fa-cart-shopping"></i> الطلبات</div>
-    <div class="nav-item" id="btn-promo" onclick="showAdminTab('promo')"><i class="fa-solid fa-tags"></i> أكواد الخصم</div>
-    <a href="index.html" class="nav-item" style="margin-top: auto; color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> العودة للمتجر</a>
-  </aside>
+  </div>
 
-  <!-- Main Content -->
-  <main class="main-content">
-    <div class="top-bar">
-      <h1 id="pageTitle">نظرة عامة على المتجر</h1>
-      <div class="user-badge"><i class="fa-solid fa-user-shield"></i> مرحباً، الأدمن علاء</div>
-    </div>
-
-    <!-- Stats Grid (الداشبورد الشاملة 10 كروت) -->
-    <div class="stats-grid" id="main-stats-grid">
-      <div class="stat-card">
-        <div class="stat-info"><span>مبيعات اليوم</span><h2 id="statTodaySales">0 ج.م</h2></div>
-        <div class="stat-icon icon-blue"><i class="fa-solid fa-calendar-day"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>مبيعات الشهر</span><h2 id="statMonthSales">0 ج.م</h2></div>
-        <div class="stat-icon icon-blue"><i class="fa-solid fa-calendar-days"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>إجمالي الإيرادات</span><h2 id="statTotalSales">0 ج.م</h2></div>
-        <div class="stat-icon icon-green"><i class="fa-solid fa-sack-dollar"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>إجمالي الطلبات</span><h2 id="statTotalOrders">0</h2></div>
-        <div class="stat-icon icon-purple"><i class="fa-solid fa-cart-flatbed"></i></div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-info"><span>طلبات مكتملة</span><h2 id="statCompletedOrders">0</h2></div>
-        <div class="stat-icon icon-green"><i class="fa-solid fa-check-circle"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>طلبات معلقة</span><h2 id="statPendingOrders">0</h2></div>
-        <div class="stat-icon icon-orange"><i class="fa-solid fa-clock"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>طلبات ملغاة</span><h2 id="statCancelledOrders">0</h2></div>
-        <div class="stat-icon icon-red"><i class="fa-solid fa-xmark-circle"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>إجمالي العملاء</span><h2 id="statTotalCustomers">0</h2></div>
-        <div class="stat-icon icon-blue"><i class="fa-solid fa-users"></i></div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-info"><span>إجمالي المنتجات</span><h2 id="statTotalProducts">0</h2></div>
-        <div class="stat-icon icon-purple"><i class="fa-solid fa-boxes-stacked"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>مخزون منخفض</span><h2 id="statLowStock">0</h2></div>
-        <div class="stat-icon icon-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-info"><span>نفد من المخزون</span><h2 id="statOutOfStock">0</h2></div>
-        <div class="stat-icon icon-red"><i class="fa-solid fa-ban"></i></div>
-      </div>
-    </div>
-
-    <!-- Dashboard Tab -->
-    <section id="tab-dashboard" class="admin-section active">
-      <div class="panel-card">
-        <div class="panel-header">
-          <h3>آخر الطلبات الواردة</h3>
+  <!-- لوحة التحكم الكاملة (مخفية لحين تسجيل الدخول) -->
+  <div id="adminMainContainer" style="display: none; width: 100%; min-height: 100vh; display: flex;">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-store" style="color: var(--primary);"></i>
+          <span>WT Store</span>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>رقم الطلب</th>
-              <th>اسم العميل</th>
-              <th>الهاتف</th>
-              <th>الإجمالي</th>
-              <th>حالة الطلب</th>
-            </tr>
-          </thead>
-          <tbody id="dashboardOrdersTable"></tbody>
-        </table>
+        <button class="theme-toggle" onclick="toggleTheme()" title="تغيير الوضع"><i class="fa-solid fa-moon" id="themeIcon"></i></button>
       </div>
-    </section>
+      <div class="nav-item active" id="btn-dashboard" onclick="showAdminTab('dashboard')"><i class="fa-solid fa-chart-pie"></i> نظرة عامة</div>
+      <div class="nav-item" id="btn-products" onclick="showAdminTab('products')"><i class="fa-solid fa-box"></i> المنتجات والمخزون</div>
+      <div class="nav-item" id="btn-orders" onclick="showAdminTab('orders')"><i class="fa-solid fa-cart-shopping"></i> الطلبات</div>
+      <div class="nav-item" id="btn-promo" onclick="showAdminTab('promo')"><i class="fa-solid fa-tags"></i> أكواد الخصم</div>
+      <div class="nav-item" onclick="logoutAdmin()" style="color: var(--danger); margin-top: auto;"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</div>
+      <a href="index.html" class="nav-item" style="color: var(--primary);"><i class="fa-solid fa-globe"></i> العودة للمتجر</a>
+    </aside>
 
-    <!-- Products Tab -->
-    <section id="tab-products" class="admin-section">
-      <div class="panel-card">
-        <div class="panel-header">
-          <h3>إدارة قائمة المنتجات والمخزون</h3>
-          <button class="btn-add" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> إضافة منتج جديد</button>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>الصورة</th>
-              <th>اسم المنتج</th>
-              <th>السعر الحالي</th>
-              <th>المخزون (الكمية)</th>
-              <th>الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="adminProductsTable"></tbody>
-        </table>
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 id="pageTitle">نظرة عامة على المتجر</h1>
+        <div class="user-badge"><i class="fa-solid fa-user-shield"></i> مرحباً، الأدمن علاء</div>
       </div>
-    </section>
 
-    <!-- Orders Tab -->
-    <section id="tab-orders" class="admin-section">
-      <div class="panel-card">
-        <div class="panel-header">
-          <h3>جميع الطلبات وإدارة الحالات</h3>
+      <!-- Stats Grid -->
+      <div class="stats-grid" id="main-stats-grid">
+        <div class="stat-card">
+          <div class="stat-info"><span>مبيعات اليوم</span><h2 id="statTodaySales">0 ج.م</h2></div>
+          <div class="stat-icon icon-blue"><i class="fa-solid fa-calendar-day"></i></div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>رقم الطلب</th>
-              <th>اسم العميل</th>
-              <th>الهاتف</th>
-              <th>المحافظة</th>
-              <th>الإجمالي</th>
-              <th>طريقة الدفع</th>
-              <th>تغيير الحالة</th>
-            </tr>
-          </thead>
-          <tbody id="allOrdersTable"></tbody>
-        </table>
-      </div>
-    </section>
+        <div class="stat-card">
+          <div class="stat-info"><span>مبيعات الشهر</span><h2 id="statMonthSales">0 ج.م</h2></div>
+          <div class="stat-icon icon-blue"><i class="fa-solid fa-calendar-days"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><span>إجمالي الإيرادات</span><h2 id="statTotalSales">0 ج.م</h2></div>
+          <div class="stat-icon icon-green"><i class="fa-solid fa-sack-dollar"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><span>إجمالي الطلبات</span><h2 id="statTotalOrders">0</h2></div>
+          <div class="stat-icon icon-purple"><i class="fa-solid fa-cart-flatbed"></i></div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-info"><span>طلبات مكتملة</span><h2 id="statCompletedOrders">0</h2></div>
+          <div class="stat-icon icon-green"><i class="fa-solid fa-check-circle"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><span>طلبات معلقة</span><h2 id="statPendingOrders">0</h2></div>
+          <div class="stat-icon icon-orange"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><span>طلبات ملغاة</span><h2 id="statCancelledOrders">0</h2></div>
+          <div class="stat-icon icon-red"><i class="fa-solid fa-xmark-circle"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><span>إجمالي العملاء</span><h2 id="statTotalCustomers">0</h2></div>
+          <div class="stat-icon icon-blue"><i class="fa-solid fa-users"></i></div>
+        </div>
 
-    <!-- Promo Codes Tab -->
-    <section id="tab-promo" class="admin-section">
-      <div class="panel-card">
-        <div class="panel-header">
-          <h3>إدارة أكواد الخصم</h3>
-          <button class="btn-add" onclick="addNewPromo()"><i class="fa-solid fa-plus"></i> كود جديد</button>
+        <div class="stat-card">
+          <div class="stat-info"><span>إجمالي المنتجات</span><h2 id="statTotalProducts">0</h2></div>
+          <div class="stat-icon icon-purple"><i class="fa-solid fa-boxes-stacked"></i></div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>كود الخصم</th>
-              <th>قيمة الخصم (ج.م)</th>
-              <th>الحالة</th>
-              <th>إجراءات</th>
-            </tr>
-          </thead>
-          <tbody id="promoTable"></tbody>
-        </table>
+        <div class="stat-card">
+          <div class="stat-info"><span>مخزون منخفض</span><h2 id="statLowStock">0</h2></div>
+          <div class="stat-icon icon-orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-info"><span>نفد من المخزون</span><h2 id="statOutOfStock">0</h2></div>
+          <div class="stat-icon icon-red"><i class="fa-solid fa-ban"></i></div>
+        </div>
       </div>
-    </section>
-  </main>
+
+      <!-- Dashboard Tab -->
+      <section id="tab-dashboard" class="admin-section active">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>آخر الطلبات الواردة</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>رقم الطلب</th>
+                <th>اسم العميل</th>
+                <th>الهاتف</th>
+                <th>الإجمالي</th>
+                <th>حالة الطلب</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardOrdersTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Products Tab -->
+      <section id="tab-products" class="admin-section">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>إدارة قائمة المنتجات والمخزون</h3>
+            <button class="btn-add" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> إضافة منتج جديد</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>الصورة</th>
+                <th>اسم المنتج</th>
+                <th>السعر الحالي</th>
+                <th>المخزون (الكمية)</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="adminProductsTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Orders Tab -->
+      <section id="tab-orders" class="admin-section">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>جميع الطلبات وإدارة الحالات</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>رقم الطلب</th>
+                <th>اسم العميل</th>
+                <th>الهاتف</th>
+                <th>المحافظة</th>
+                <th>الإجمالي</th>
+                <th>طريقة الدفع</th>
+                <th>تغيير الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="allOrdersTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Promo Codes Tab -->
+      <section id="tab-promo" class="admin-section">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h3>إدارة أكواد الخصم</h3>
+            <button class="btn-add" onclick="addNewPromo()"><i class="fa-solid fa-plus"></i> كود جديد</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>كود الخصم</th>
+                <th>قيمة الخصم (ج.م)</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="promoTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <!-- Add Product Modal -->
   <div class="modal" id="addProductModal">
@@ -299,6 +359,36 @@
   </div>
 
   <script>
+    // نظام تسجيل الدخول والحماية
+    function attemptLogin() {
+      const user = document.getElementById('usernameInput').value.trim();
+      const pass = document.getElementById('passwordInput').value.trim();
+      const errEl = document.getElementById('loginError');
+
+      if (user === 'admin1234' && pass === 'alaamoh1234') {
+        sessionStorage.setItem('wt_admin_logged', 'true');
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminMainContainer').style.display = 'flex';
+        initAdminPage();
+      } else {
+        errEl.textContent = 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+      }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('wt_admin_logged');
+      location.reload();
+    }
+
+    // التحقق عند تحميل الصفحة
+    document.addEventListener("DOMContentLoaded", () => {
+      if (sessionStorage.getItem('wt_admin_logged') === 'true') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminMainContainer').style.display = 'flex';
+        initAdminPage();
+      }
+    });
+
     // إعدادات الاتصال بـ Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBgiUuOxa9JKG3lTonpl8uYPaJBlUSisAU",
@@ -317,10 +407,6 @@
     let uploadedImagesBase64 = [];
     let cloudOrders = [];
     let adminCloudProducts = [];
-
-    document.addEventListener("DOMContentLoaded", () => {
-      initAdminPage();
-    });
 
     function initAdminPage() {
       // الاستماع للمنتجات
@@ -583,7 +669,6 @@
       const titles = { dashboard: "نظرة عامة على المتجر", products: "إدارة المنتجات والمخزون", orders: "إدارة الطلبات", promo: "إدارة أكواد الخصم" };
       document.getElementById('pageTitle').textContent = titles[tabName] || "لوحة التحكم";
 
-      // إخفاء/إظهار شبكة الإحصائيات العلوية بناءً على التبويب
       document.getElementById('main-stats-grid').style.display = (tabName === 'dashboard') ? 'grid' : 'none';
     }
 
