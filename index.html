@@ -122,32 +122,30 @@
   
 <main>
 
-  <!-- ===== 1. الرئيسية (سلايدر صور/فيديوهات فقط بدون منتجات) ===== -->
+  <!-- ===== 1. الرئيسية ===== -->
   <div class="view active" id="view-home">
     <div class="container" style="padding-top: 20px;">
       
-      <!-- معرض الصور والفيديوهات المتحرك (Hero Slider) -->
+      <!-- معرض الصور المتحرك (Hero Slider) -->
       <div class="hero-slider" id="heroSlider">
         <button class="slider-btn prev" onclick="moveSlide(-1)">❮</button>
         <button class="slider-btn next" onclick="moveSlide(1)">❯</button>
 
-        <!-- السلايد الأول: صورة أو فيديو سماعات -->
         <div class="slide active" style="background-image: url('assets/cover.jpg');">
           <div class="slide-overlay">
             <span style="color:#10b981; font-weight:bold;">🎧 أحدث السماعات اللاسلكية</span>
             <h2 style="font-size:28px; margin:5px 0;">نقاء صوت عالي وتصميم عصري</h2>
             <p style="color:#ccc; font-size:14px; margin-bottom:15px;">استمتع بأفضل تجربة استماع مع عزل الضوضاء وضمان حقيقي.</p>
-            <button class="btn btn-primary" style="width:fit-content;" onclick="navigate('products')">تصفح قسم السماعات</button>
+            <button class="btn btn-primary" style="width:fit-content;" onclick="openCategory('سماعات')">تصفح قسم السماعات</button>
           </div>
         </div>
 
-        <!-- السلايد الثاني: الشواحن والوصلات -->
         <div class="slide" style="background-image: url('assets/cover.jpg');">
           <div class="slide-overlay">
             <span style="color:#10b981; font-weight:bold;">⚡ شواحن ووصلات أصلية</span>
             <h2 style="font-size:28px; margin:5px 0;">شحن سريع وآمن 100%</h2>
             <p style="color:#ccc; font-size:14px; margin-bottom:15px;">احمِ بطارية موبايلك مع أفضل الشواحن والوصلات المقاومة للقطع.</p>
-            <button class="btn btn-primary" style="width:fit-content;" onclick="navigate('products')">تصفح الشواحن والوصلات</button>
+            <button class="btn btn-primary" style="width:fit-content;" onclick="openCategory('شواحن')">تصفح الشواحن والوصلات</button>
           </div>
         </div>
       </div>
@@ -164,7 +162,7 @@
             <p>في WT Store، نوفر لك أحدث الإكسسوارات التقنية بجودة عالية وأسعار مناسبة. نركز على اختيار منتجات موثوقة من العلامات المعروفة، مع تجربة شراء سهلة وسريعة من الطلب وحتى التوصيل.</p>
             <div class="about-stats">
               <div><strong id="aboutProductsCount">0</strong><span>منتج متوفر</span></div>
-              <div><strong>100%</strong><span>ضمان أصالة</span></div>
+              <div><strong>100%</strong><span>ضمان</span></div>
               <div><strong>24/7</strong><span>دعم عبر واتساب</span></div>
             </div>
           </div>
@@ -176,7 +174,7 @@
     </section>
   </div>
 
-  <!-- ===== 2. صفحة المنتجات المستقلة (تفتح فقط عند الضغط على "المنتجات") ===== -->
+  <!-- ===== 2. صفحة المنتجات المستقلة ===== -->
   <div class="view" id="view-products">
     <section class="section">
       <div class="container">
@@ -215,12 +213,20 @@
       <div class="footer-brand">
         <img src="assets/logo.jpg" alt="WT Store">
         <p>وجهتك لأحدث الإكسسوارات التقنية بجودة عالية وتجربة شراء سهلة وموثوقة.</p>
+
+        <!-- رجعتلك أيقونات السوشيال ميديا كاملة هنا -->
+        <div class="social-icons" style="display: flex; gap: 15px; margin-top: 15px;">
+          <a id="footerFb" href="#" target="_blank" aria-label="Facebook" style="color: #fff; font-size: 20px;"><i class="fab fa-facebook-f"></i></a>
+          <a id="footerWa" href="#" target="_blank" aria-label="WhatsApp" style="color: #fff; font-size: 20px;"><i class="fab fa-whatsapp"></i></a>
+          <a id="footerIg" href="#" target="_blank" aria-label="Instagram" style="color: #fff; font-size: 20px;"><i class="fab fa-instagram"></i></a>
+        </div>
       </div>
       <div class="footer-col">
         <h4>روابط سريعة</h4>
         <ul>
           <li><a onclick="navigate('home')">الرئيسية</a></li>
           <li><a onclick="navigate('products')">المنتجات</a></li>
+          <li><a onclick="scrollToSection('aboutSection')">من نحن</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -230,6 +236,12 @@
           <li><a onclick="navigate('cart')">🛒 سلة التسوق</a></li>
         </ul>
       </div>
+      <div class="footer-col">
+        <h4>تواصل معنا</h4>
+        <ul>
+          <li><a id="footerWa2" href="#" target="_blank">راسلنا عبر واتساب</a></li>
+        </ul>
+      </div>
     </div>
     <div class="footer-bottom">
       © <span id="year"></span> WT Store. جميع الحقوق محفوظة.
@@ -237,11 +249,20 @@
   </div>
 </footer>
 
+<!-- أيقونة الواتساب العائمة -->
 <div id="floating-whatsapp" style="position: fixed; bottom: 25px; left: 25px; z-index: 9999;">
-  <a href="https://wa.me/201000000000" target="_blank" aria-label="تواصل عبر واتساب" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background-color: #25d366; color: #fff; border-radius: 50%; font-size: 32px; text-decoration: none;">
+  <a href="https://wa.me/201000000000" target="_blank" aria-label="تواصل عبر واتساب" style="display: flex; align-items: center; justify-content: center; width: 60px; height: 60px; background-color: #25d366; color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 32px; text-decoration: none; animation: pulse-whatsapp 2s infinite;">
     <i class="fab fa-whatsapp"></i>
   </a>
 </div>
+
+<style>
+@keyframes pulse-whatsapp {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+</style>
 
 <div class="toast" id="toast"></div>
 
