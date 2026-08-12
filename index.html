@@ -69,13 +69,23 @@
       </div>
     </section>
 
+    <!-- ===== قسم المنتجات مع الأقسام والعدد الديناميكي ===== -->
     <section class="section" id="productsSection">
       <div class="container">
         <div class="section-header">
           <span class="eyebrow">مختاراتنا</span>
           <h2>منتجاتنا المميزة</h2>
-          <p>أربع قطع مختارة بعناية لتناسب احتياجاتك اليومية</p>
+          <p id="productsCountText">جاري تحميل عدد المنتجات...</p>
         </div>
+
+        <!-- أزرار الأقسام (سماعات، شواحن، وصلات، الكل) -->
+        <div class="categories-filter" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap;">
+          <button class="btn btn-outline" onclick="renderProductGrid('الكل')">الكل</button>
+          <button class="btn btn-outline" onclick="renderProductGrid('سماعات')">سماعات</button>
+          <button class="btn btn-outline" onclick="renderProductGrid('شواحن')">شواحن</button>
+          <button class="btn btn-outline" onclick="renderProductGrid('وصلات')">وصلات</button>
+        </div>
+
         <div class="products-grid" id="productsGrid"></div>
       </div>
     </section>
@@ -89,7 +99,7 @@
             <p>في WT Store، نوفر لك أحدث الإكسسوارات التقنية بجودة عالية وأسعار مناسبة. نركز على اختيار منتجات موثوقة من العلامات المعروفة، مع تجربة شراء سهلة وسريعة من الطلب وحتى التوصيل.</p>
             <p>هدفنا أن نكون وجهتك الأولى لكل ما يخص السماعات، الساعات الذكية، ومستلزمات الصوت.</p>
             <div class="about-stats">
-              <div><strong>4+</strong><span>منتجات مختارة</span></div>
+              <div><strong id="aboutProductsCount">4+</strong><span>منتجات مختارة</span></div>
               <div><strong>100%</strong><span>ضمان أصالة</span></div>
               <div><strong>24/7</strong><span>دعم عبر واتساب</span></div>
             </div>
