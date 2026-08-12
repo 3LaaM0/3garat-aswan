@@ -2,6 +2,9 @@
 // التطبيق الرئيسي - متجر WT Store الاحترافي
 // ============================================
 
+// تنظيف أية منتجات قديمة محفوضة في الذاكرة المحلية لمتصفح الزبون
+localStorage.removeItem('wt_custom_products');
+
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
 
 const EGYPT_GOVERNORATES = [
@@ -12,7 +15,6 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
-// حقن أنيميشن وتنسيقات شبكة المنتجات
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
@@ -32,7 +34,6 @@ if (!document.getElementById("page-motion-styles")) {
   document.head.appendChild(style);
 }
 
-// السلايدر المباشر بالصفحة الرئيسية
 let currentSlide = 0;
 function moveSlide(direction) {
   const slides = document.querySelectorAll('.slide');
@@ -88,6 +89,7 @@ function executeViewRender(view, params) {
 
 let cloudProducts = [];
 let cloudOrders = [];
+let isCloudLoaded = false;
 
 function initCloudProducts() {
   if (typeof firebase !== 'undefined') {
@@ -111,6 +113,7 @@ function initCloudProducts() {
         cloudProducts.push({ docId: doc.id, ...doc.data() });
       });
       
+      isCloudLoaded = true;
       updateProductCounts();
 
       const { view, params } = parseHash();
@@ -133,8 +136,7 @@ function initCloudProducts() {
 }
 
 function updateProductCounts() {
-  const allProds = getActiveProducts();
-  const count = allProds.length;
+  const count = cloudProducts.length;
   const countText = document.getElementById('productsCountText');
   const aboutCount = document.getElementById('aboutProductsCount');
 
@@ -143,8 +145,7 @@ function updateProductCounts() {
 }
 
 function getActiveProducts() {
-  if (cloudProducts && cloudProducts.length > 0) return cloudProducts;
-  return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
+  return cloudProducts;
 }
 
 window.openCategory = function(cat) {
@@ -167,6 +168,11 @@ function renderProductGrid(selectedCategory = 'الكل') {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
 
+  if (!isCloudLoaded) {
+    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--primary); font-size: 18px; padding: 60px 0;">جاري تحميل المنتجات من السحابة... ⏳</p>`;
+    return;
+  }
+
   let productsList = getActiveProducts();
 
   if (selectedCategory && selectedCategory !== 'الكل') {
@@ -174,7 +180,7 @@ function renderProductGrid(selectedCategory = 'الكل') {
   }
 
   if (!productsList || productsList.length === 0) {
-    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات متوفرة في قسم (${selectedCategory}) حالياً.</p>`;
+    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات متوفرة في هذا القسم حالياً.</p>`;
     return;
   }
 
@@ -216,7 +222,6 @@ function quickAddToCart(id, e) {
   showToast("تمت إضافة المنتج إلى السلة بنجاح 🛍️");
 }
 
-// ---------- صفحة تفاصيل المنتج مع الأسهم والتنقل والتقليب التلقائي ----------
 function renderProductDetails(id) {
   const productsList = getActiveProducts();
   const el = document.getElementById("view-product");
@@ -235,7 +240,6 @@ function renderProductDetails(id) {
   const randomViewers = Math.floor(Math.random() * (125 - 45 + 1)) + 45;
   const productImages = (product.images && product.images.length > 0) ? product.images : [product.image || 'assets/logo.jpg'];
   
-  // حفظ صور المنتج الحالية ومؤشر الصورة
   window._detailImages = productImages;
   window._detailImgIndex = 0;
 
@@ -302,7 +306,6 @@ function renderProductDetails(id) {
   `;
   window._detailQty = 1;
 
-  // تشغيل التقليب التلقائي للصور كل 4 ثوانٍ إذا كان للمنتج أكثر من صورة
   if (window._detailImgInterval) clearInterval(window._detailImgInterval);
   if (productImages.length > 1) {
     window._detailImgInterval = setInterval(() => {
@@ -311,21 +314,18 @@ function renderProductDetails(id) {
   }
 }
 
-// دالة تغيير الصورة بالضغط المباشر على الصور المصغرة
 window.changeMainImageByIndex = function(index) {
   if (!window._detailImages || !window._detailImages.length) return;
   window._detailImgIndex = index;
   updateDetailImageDisplay();
 };
 
-// دالة التنقل بالأسهم (يمين ويسار)
 window.moveDetailImage = function(step) {
   if (!window._detailImages || !window._detailImages.length) return;
   window._detailImgIndex = (window._detailImgIndex + step + window._detailImages.length) % window._detailImages.length;
   updateDetailImageDisplay();
 };
 
-// تحديث عرض الصورة والحد الخارجي للصورة النشطة
 function updateDetailImageDisplay() {
   const mainImg = document.getElementById('mainProductImg');
   if (mainImg && window._detailImages && window._detailImages[window._detailImgIndex]) {
