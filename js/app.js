@@ -57,6 +57,7 @@ function parseHash() {
   return { view: view || "home", params };
 }
 
+// دالة العرض - تم تصحيح مشكلة الإخفاء الإجباري هنا
 function renderView(view, params) {
   if (view === "products" || view === "productsSection") {
     scrollToSection("productsSection");
@@ -70,7 +71,13 @@ function renderView(view, params) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   const target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  
+  // إزالة أي أوامر إخفاء إجبارية من كل الصفحات
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active");
+    v.style.display = ""; // هذا السطر يحل المشكلة جذرياً
+  });
+  
   target.classList.add("active");
 
   executeViewRender(view, params);
@@ -761,7 +768,7 @@ function closeMobileMenu() {
   if (hamburger) hamburger.classList.remove("open");
 }
 
-// ---------- النزول المباشر والسلس للأقسام ----------
+// ---------- النزول المباشر والسلس للأقسام - تم تصحيح مشكلة الإخفاء الإجباري هنا ----------
 function scrollToSection(sectionId) {
   closeMobileMenu();
   const homeView = document.getElementById("view-home");
@@ -769,10 +776,9 @@ function scrollToSection(sectionId) {
   if (homeView && !homeView.classList.contains("active")) {
     document.querySelectorAll(".view").forEach(v => {
       v.classList.remove("active");
-      v.style.display = "none";
+      v.style.display = ""; // هذا السطر يحل المشكلة جذرياً
     });
     homeView.classList.add("active");
-    homeView.style.display = "block";
   }
 
   setTimeout(() => {
