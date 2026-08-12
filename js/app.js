@@ -1,5 +1,5 @@
 // ============================================
-// التطبيق الرئيسي - متجر WT Store الاحترافي (سحابي ومتزامن)
+// التطبيق الرئيسي - متجر WT Store الاحترافي
 // ============================================
 
 const EGY_PHONE_REGEX = /^01[0125][0-9]{8}$/;
@@ -12,7 +12,7 @@ const EGYPT_GOVERNORATES = [
   "قنا", "شمال سيناء", "سوهاج"
 ];
 
-// حقن أنيميشن وتنسيق شبكة المنتجات لتبقى صغيرة ومرتبة حتى لو كان منتجاً واحداً
+// حقن تنسيقات شبكة المنتجات
 if (!document.getElementById("page-motion-styles")) {
   const style = document.createElement("style");
   style.id = "page-motion-styles";
@@ -24,7 +24,7 @@ if (!document.getElementById("page-motion-styles")) {
     }
     #productsGrid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 280px));
+      grid-template-columns: repeat(auto-fill, minmax(250px, 280px));
       justify-content: center;
       gap: 20px;
     }
@@ -32,18 +32,20 @@ if (!document.getElementById("page-motion-styles")) {
   document.head.appendChild(style);
 }
 
+// السلايدر المباشر بالصفحة الرئيسية
+let currentSlide = 0;
+function moveSlide(direction) {
+  const slides = document.querySelectorAll('.slide');
+  if (!slides.length) return;
+  slides[currentSlide].classList.remove('active');
+  currentSlide = (currentSlide + direction + slides.length) % slides.length;
+  slides[currentSlide].classList.add('active');
+}
+// تقليب تلقائي كل 5 ثواني
+setInterval(() => moveSlide(1), 5000);
+
 function navigate(view, params = {}) {
   closeMobileMenu();
-  
-  if (view === "products" || view === "productsGrid" || view === "productsSection") {
-    scrollToSection("productsSection");
-    return;
-  }
-  if (view === "about" || view === "aboutSection") {
-    scrollToSection("aboutSection");
-    return;
-  }
-
   const hash = params.id ? `#${view}?id=${params.id}` : `#${view}`;
   if (window.location.hash !== hash) {
     window.location.hash = hash;
@@ -64,15 +66,6 @@ function parseHash() {
 }
 
 function renderView(view, params) {
-  if (view === "products" || view === "productsSection") {
-    scrollToSection("productsSection");
-    return;
-  }
-  if (view === "about" || view === "aboutSection") {
-    scrollToSection("aboutSection");
-    return;
-  }
-
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   const target = document.getElementById(`view-${view}`) || document.getElementById("view-home");
@@ -87,6 +80,7 @@ function renderView(view, params) {
 }
 
 function executeViewRender(view, params) {
+  if (view === "products") renderProductGrid(window._currentCat || 'الكل');
   if (view === "product") renderProductDetails(params.id);
   if (view === "cart") renderCartView();
   if (view === "checkout") renderCheckoutView();
@@ -116,40 +110,52 @@ function initCloudProducts() {
         cloudProducts.push({ docId: doc.id, ...doc.data() });
       });
       
+      updateProductCounts();
+
       const { view, params } = parseHash();
-      if (view === "product" && params.id) {
-        renderProductDetails(params.id); 
-      }
-      renderProductGrid('الكل'); 
+      if (view === "products") renderProductGrid(window._currentCat || 'الكل');
+      if (view === "product" && params.id) renderProductDetails(params.id);
     }, (error) => {
       console.error("خطأ في جلب المنتجات السحابية:", error);
     });
   }
 }
 
+function updateProductCounts() {
+  const count = cloudProducts.length;
+  const countText = document.getElementById('productsCountText');
+  const aboutCount = document.getElementById('aboutProductsCount');
+
+  if (countText) countText.textContent = `يتوفر لدينا الآن ${count} منتج أصلية ومضمونة`;
+  if (aboutCount) aboutCount.textContent = count + "+";
+}
+
 function getActiveProducts() {
   if (cloudProducts && cloudProducts.length > 0) return cloudProducts;
-  const saved = localStorage.getItem('wt_custom_products');
-  if (saved) {
-    try { return JSON.parse(saved); } catch (e) { console.error(e); }
-  }
   return typeof PRODUCTS !== 'undefined' ? PRODUCTS : [];
 }
 
-// ---------- عرض المنتجات مع الأقسام (سماعات، شواحن، وصلات) ----------
+// تصفية الأقسام (سماعات، شواحن، وصلات)
+window.filterCategory = function(cat) {
+  window._currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById(`btn-cat-${cat}`);
+  if (activeBtn) activeBtn.classList.add('active');
+  renderProductGrid(cat);
+};
+
 function renderProductGrid(selectedCategory = 'الكل') {
   const grid = document.getElementById("productsGrid");
   if (!grid) return;
 
   let productsList = getActiveProducts();
 
-  // تصفية المنتجات حسب القسم المختار
   if (selectedCategory && selectedCategory !== 'الكل') {
-    productsList = productsList.filter(p => p.category === selectedCategory);
+    productsList = productsList.filter(p => (p.category || 'أخرى') === selectedCategory);
   }
 
   if (!productsList || productsList.length === 0) {
-    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات متوفرة في هذا القسم حالياً.</p>`;
+    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); font-size: 18px; padding: 60px 0;">لا توجد منتجات متوفرة في قسم (${selectedCategory}) حالياً.</p>`;
     return;
   }
 
@@ -218,7 +224,7 @@ function renderProductDetails(id) {
 
   el.innerHTML = `
     <div class="container product-details">
-      <button class="back-btn" onclick="navigate('home')">← العودة للرئيسية</button>
+      <button class="back-btn" onclick="navigate('products')">← العودة للمنتجات</button>
       <div class="details-grid">
         <div class="details-gallery">
           <div class="details-image" style="margin-bottom: 12px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card);">
@@ -244,17 +250,8 @@ function renderProductDetails(id) {
             <span class="price">${product.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
             <span class="old-price">${product.oldPrice ? product.oldPrice + ' ' + (STORE_CONFIG.currency || 'ج.م') : ''}</span>
           </div>
-          
-          <div class="product-rating" style="display: flex; align-items: center; gap: 8px; margin: 10px 0; color: #ffaa00; font-size: 14px;">
-            <span>⭐⭐⭐⭐⭐</span>
-            <strong style="color: #fff;">4.9 / 5</strong>
-            <span style="color: #888;">(142 تقييم عميل)</span>
-          </div>
 
           <p class="details-desc">${product.description || product.shortDesc || ''}</p>
-          <ul class="specs-list">
-            ${(product.specs || ["ضمان أصلية 100%", "شحن سريع"]).map(s => `<li>✓ ${s}</li>`).join("")}
-          </ul>
 
           ${!isOut ? `
           <div class="qty-selector">
@@ -277,7 +274,6 @@ function renderProductDetails(id) {
 window.changeMainImage = function(src, thumbEl) {
   const mainImg = document.getElementById('mainProductImg');
   if (mainImg) mainImg.src = src;
-  
   if (thumbEl) {
     const thumbs = thumbEl.parentElement.querySelectorAll('img');
     thumbs.forEach(t => t.style.borderColor = 'var(--border)');
@@ -314,7 +310,7 @@ function renderCartView() {
         <div class="empty-state">
           <div class="empty-icon" style="font-size: 50px; margin-bottom: 15px;">🛒</div>
           <p style="color: var(--text-muted); font-size: 18px;">السلة فارغة</p>
-          <button class="btn btn-primary" onclick="navigate('home')" style="margin-top: 20px;">تصفح المنتجات</button>
+          <button class="btn btn-primary" onclick="navigate('products')" style="margin-top: 20px;">تصفح المنتجات</button>
         </div>
       </div>`;
     return;
@@ -330,9 +326,9 @@ function renderCartView() {
           <span class="price" style="color: #10b981; font-weight: bold;">${i.price} ${STORE_CONFIG.currency || 'ج.م'}</span>
         </div>
         <div class="cart-qty" style="display: flex; align-items: center; gap: 10px;">
-          <button onclick="Cart.decrease(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">−</button>
+          <button onclick="Cart.decrease(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px;">−</button>
           <span>${i.qty}</span>
-          <button onclick="Cart.increase(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; border-radius: 4px;">+</button>
+          <button onclick="Cart.increase(${i.id}); renderCartView(); Cart.updateCounter();" style="padding: 5px 10px;">+</button>
         </div>
         <div class="cart-row-total" style="font-weight: bold; padding: 0 15px;">${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}</div>
         <button class="remove-btn" onclick="Cart.remove(${i.id}); renderCartView(); Cart.updateCounter();" style="background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer;">✕</button>
@@ -344,16 +340,11 @@ function renderCartView() {
     <div class="container" style="padding: 40px 20px;">
       <h1 class="page-title" style="margin-bottom: 25px; text-align: right;">سلة التسوق</h1>
       <div class="cart-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
-        <div class="cart-items">
-          ${rows}
-          <button class="btn btn-text" onclick="Cart.clear(); renderCartView(); Cart.updateCounter();" style="margin-top: 15px; color: var(--danger); background: none; border: none; cursor: pointer; font-weight: bold;">إفراغ السلة</button>
-        </div>
-        <div class="cart-summary" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); height: fit-content;">
-          <h3 style="margin-bottom: 15px;">ملخص الطلب</h3>
-          <div class="summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: var(--text-muted);"><span>المجموع الفرعي</span><span>${Cart.subtotal()} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
-          <div class="summary-row total" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px; color: var(--text-main);"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
-          <button class="btn btn-primary btn-lg full" onclick="navigate('checkout')" style="width: 100%; margin-bottom: 10px; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">إتمام الطلب</button>
-          <button class="btn btn-outline full" onclick="navigate('home')" style="width: 100%; padding: 12px; background: none; border: 1px solid var(--border); color: var(--text-main); border-radius: 8px; font-weight: bold; cursor: pointer;">متابعة التسوق</button>
+        <div class="cart-items">${rows}</div>
+        <div class="cart-summary" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border);">
+          <h3>ملخص الطلب</h3>
+          <div class="summary-row total"><span>الإجمالي</span><span>${Cart.total()} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
+          <button class="btn btn-primary full" onclick="navigate('checkout')" style="width: 100%; margin-top: 15px; padding: 12px;">إتمام الطلب</button>
         </div>
       </div>
     </div>`;
@@ -365,177 +356,51 @@ function renderCheckoutView() {
   const items = Cart.detailedItems();
 
   if (items.length === 0) {
-    el.innerHTML = `
-      <div class="container">
-        <h1 class="page-title">إتمام الطلب</h1>
-        <div class="empty-state">
-          <div class="empty-icon">🛒</div>
-          <p>السلة فارغة، أضف منتجات أولاً</p>
-          <button class="btn btn-primary" onclick="navigate('home')">تصفح المنتجات</button>
-        </div>
-      </div>`;
+    el.innerHTML = `<div class="container" style="text-align:center; padding:50px;"><p>السلة فارغة</p></div>`;
     return;
   }
-
-  window._appliedPromo = null;
 
   el.innerHTML = `
     <div class="container">
       <h1 class="page-title">إتمام الطلب</h1>
       <div class="checkout-layout">
         <form id="checkoutForm" class="checkout-form">
+          <div class="form-group"><label>الاسم الكامل</label><input type="text" id="fName"><span class="error" id="err-fName"></span></div>
+          <div class="form-group"><label>رقم الهاتف</label><input type="tel" id="fPhone" maxlength="11"><span class="error" id="err-fPhone"></span></div>
+          <div class="form-group"><label>رقم واتساب</label><input type="tel" id="fWhatsapp" maxlength="11"><span class="error" id="err-fWhatsapp"></span></div>
           <div class="form-group">
-            <label>الاسم الكامل</label>
-            <input type="text" id="fName" placeholder="مثال: أحمد محمد">
-            <span class="error" id="err-fName"></span>
+            <label>المحافظة</label>
+            <select id="fProvince"><option value="">اختر المحافظة</option>${EGYPT_GOVERNORATES.map(gov => `<option value="${gov}">${gov}</option>`).join("")}</select>
+            <span class="error" id="err-fProvince"></span>
           </div>
-          <div class="form-group">
-            <label>رقم الهاتف</label>
-            <input type="tel" id="fPhone" placeholder="01xxxxxxxxx" maxlength="11" inputmode="numeric">
-            <span class="error" id="err-fPhone"></span>
-          </div>
-          <div class="form-group">
-            <label>رقم واتساب</label>
-            <input type="tel" id="fWhatsapp" placeholder="01xxxxxxxxx" maxlength="11" inputmode="numeric">
-            <span class="error" id="err-fWhatsapp"></span>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>المحافظة</label>
-              <select id="fProvince">
-                <option value="">اختر المحافظة</option>
-                ${EGYPT_GOVERNORATES.map(gov => `<option value="${gov}">${gov}</option>`).join("")}
-              </select>
-              <span class="error" id="err-fProvince"></span>
-            </div>
-            <div class="form-group">
-              <label>المدينة</label>
-              <input type="text" id="fCity" placeholder="مثال: مدينة نصر">
-              <span class="error" id="err-fCity"></span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>العنوان بالتفصيل</label>
-            <textarea id="fAddress" rows="3" placeholder="اسم الشارع، رقم المبنى، علامة مميزة..."></textarea>
-            <span class="error" id="err-fAddress"></span>
-          </div>
-
+          <div class="form-group"><label>المدينة</label><input type="text" id="fCity"><span class="error" id="err-fCity"></span></div>
+          <div class="form-group"><label>العنوان بالتفصيل</label><textarea id="fAddress" rows="3"></textarea><span class="error" id="err-fAddress"></span></div>
           <div class="form-group">
             <label>طريقة الدفع</label>
-            <select id="fPaymentMethod" style="width: 100%; padding: 12px 14px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 10px;">
+            <select id="fPaymentMethod" style="width: 100%; padding: 12px; background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border); border-radius: 8px;">
               <option value="الدفع عند الاستلام">الدفع عند الاستلام (كاش)</option>
               <option value="فودافون كاش">فودافون كاش</option>
               <option value="إنستا باي (InstaPay)">إنستا باي (InstaPay)</option>
             </select>
           </div>
-
-          <div class="form-group" style="background:var(--bg-body); padding:15px; border-radius:10px; border:1px dashed var(--border); margin-top: 20px;">
-            <label>هل لديك كود خصم؟</label>
-            <div style="display:flex; gap:10px;">
-              <input type="text" id="promoInput" placeholder="أدخل كود الخصم" style="flex:1; margin:0;">
-              <button type="button" class="btn btn-outline" onclick="applyPromo()">تطبيق الخصم</button>
-            </div>
-            <p id="promoMsg" style="font-size:13px; margin-top:8px; font-weight:bold;"></p>
-          </div>
-
-          <div class="form-group">
-            <label>ملاحظات إضافية (اختياري)</label>
-            <textarea id="fNotes" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
-          </div>
-          <button type="button" id="confirmOrderBtn" class="btn btn-primary btn-lg full" style="margin-top: 15px;">تأكيد الطلب</button>
+          <button type="button" id="confirmOrderBtn" class="btn btn-primary full" style="margin-top: 15px;">تأكيد الطلب</button>
         </form>
         <div class="cart-summary">
           <h3>ملخص الطلب</h3>
-          <div id="checkoutSummaryContainer"></div>
+          <div class="summary-row total"><span>الإجمالي النهائي</span><span style="color:#10b981;">${Cart.total()} ج.م</span></div>
         </div>
       </div>
     </div>`;
 
-  updateCheckoutSummary();
-
   setTimeout(() => {
     const btn = document.getElementById("confirmOrderBtn");
     if (btn) btn.onclick = executeOrderSubmission;
-    
-    ["fPhone", "fWhatsapp"].forEach(id => {
-      const input = document.getElementById(id);
-      if (input) {
-        input.addEventListener("input", () => {
-          input.value = input.value.replace(/[^0-9]/g, "").slice(0, 11);
-        });
-      }
-    });
   }, 100);
 }
 
-window.applyPromo = async function() {
-  const codeInput = document.getElementById('promoInput');
-  const msgEl = document.getElementById('promoMsg');
-  if (!codeInput || !msgEl) return;
-  
-  const code = codeInput.value.trim().toUpperCase();
-  if (!code) return;
-
-  msgEl.textContent = "جاري التحقق من الكود...";
-  msgEl.style.color = "var(--text-muted)";
-
-  try {
-    const db = firebase.firestore();
-    const snap = await db.collection("promo_codes").where("code", "==", code).where("active", "==", true).get();
-    
-    if (!snap.empty) {
-      const promo = snap.docs[0].data();
-      window._appliedPromo = { code: promo.code, value: promo.value };
-      msgEl.textContent = `تم تطبيق خصم بقيمة ${promo.value} ج.م بنجاح! 🎉`;
-      msgEl.style.color = "#10b981"; 
-      updateCheckoutSummary();
-    } else {
-      window._appliedPromo = null;
-      msgEl.textContent = "الكود غير صحيح، أو تم إيقافه.";
-      msgEl.style.color = "var(--danger)";
-      updateCheckoutSummary();
-    }
-  } catch (err) {
-    console.error("خطأ في التحقق من الكود:", err);
-    msgEl.textContent = "حدث خطأ في الشبكة.";
-    msgEl.style.color = "var(--danger)";
-  }
-};
-
-window.updateCheckoutSummary = function() {
-  const container = document.getElementById('checkoutSummaryContainer');
-  if (!container) return;
-  const items = Cart.detailedItems();
-  const subtotal = Cart.total();
-  let discountVal = window._appliedPromo ? window._appliedPromo.value : 0;
-  let finalTotal = Math.max(0, subtotal - discountVal);
-
-  let html = items.map(i => `<div class="summary-row"><span>${i.name} × ${i.qty}</span><span>${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`).join('');
-  
-  html += `<hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">`;
-  html += `<div class="summary-row"><span>المجموع الفرعي</span><span>${subtotal} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`;
-  
-  if (window._appliedPromo) {
-    html += `<div class="summary-row" style="color:#10b981; font-weight:bold;"><span>الخصم (${window._appliedPromo.code})</span><span>-${discountVal} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`;
-  }
-  
-  html += `<div class="summary-row total" style="font-size: 18px; margin-top: 10px;"><span>الإجمالي النهائي</span><span style="color:#10b981;">${finalTotal} ${STORE_CONFIG.currency || 'ج.م'}</span></div>`;
-  
-  container.innerHTML = html;
-};
-
 async function executeOrderSubmission(e) {
   if (e) e.preventDefault();
-
-  const fields = {
-    fName: "يرجى إدخال الاسم",
-    fPhone: "يرجى إدخال رقم الهاتف",
-    fWhatsapp: "يرجى إدخال رقم واتساب",
-    fProvince: "يرجى إدخال المحافظة",
-    fCity: "يرجى إدخال المدينة",
-    fAddress: "يرجى إدخال العنوان"
-  };
-
+  const fields = { fName: "أدخل الاسم", fPhone: "أدخل الهاتف", fWhatsapp: "أدخل الواتساب", fProvince: "اختر المحافظة", fCity: "أدخل المدينة", fAddress: "أدخل العنوان" };
   let valid = true;
   const values = {};
   for (const [id, msg] of Object.entries(fields)) {
@@ -543,253 +408,87 @@ async function executeOrderSubmission(e) {
     const errEl = document.getElementById(`err-${id}`);
     if (input) {
       values[id] = input.value.trim();
-      if (!values[id]) {
-        if (errEl) errEl.textContent = msg;
-        valid = false;
-      } else {
-        if (errEl) errEl.textContent = "";
-      }
+      if (!values[id]) { if (errEl) errEl.textContent = msg; valid = false; }
+      else { if (errEl) errEl.textContent = ""; }
     }
   }
-
-  ["fPhone", "fWhatsapp"].forEach(id => {
-    const errEl = document.getElementById(`err-${id}`);
-    if (values[id] && !EGY_PHONE_REGEX.test(values[id])) {
-      if (errEl) errEl.textContent = "يرجى إدخال رقم مصري صحيح (11 رقم يبدأ بـ 01)";
-      valid = false;
-    }
-  });
-
   if (!valid) return;
 
-  const paymentMethod = document.getElementById("fPaymentMethod") ? document.getElementById("fPaymentMethod").value : "الدفع عند الاستلام";
-  const items = Cart.detailedItems();
-  const subtotal = Cart.total();
-  const discountVal = window._appliedPromo ? window._appliedPromo.value : 0;
-  const finalTotal = Math.max(0, subtotal - discountVal);
-  const orderNumber = "QR-" + Math.floor(100000 + Math.random() * 900000);
-  
-  const itemsText = items.map(i => `• ${i.name} (×${i.qty}) - ${i.price * i.qty} ${STORE_CONFIG.currency || 'ج.م'}`).join("\n");
-
   const order = {
-    orderNumber: orderNumber,
-    name: values.fName,
-    phone: values.fPhone,
-    whatsapp: values.fWhatsapp,
-    province: values.fProvince,
-    city: values.fCity,
-    address: values.fAddress,
-    paymentMethod: paymentMethod,
-    promoCode: window._appliedPromo ? window._appliedPromo.code : null,
-    discount: discountVal,
-    subtotal: subtotal,
-    total: finalTotal,
-    notes: document.getElementById("fNotes") ? document.getElementById("fNotes").value.trim() : '',
-    items: items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price })),
-    date: new Date().toLocaleDateString("ar-EG"),
-    status: "بانتظار التأكيد",
-    createdAt: Date.now()
+    orderNumber: "QR-" + Math.floor(100000 + Math.random() * 900000),
+    name: values.fName, phone: values.fPhone, whatsapp: values.fWhatsapp,
+    province: values.fProvince, city: values.fCity, address: values.fAddress,
+    paymentMethod: document.getElementById("fPaymentMethod").value,
+    total: Cart.total(), items: Cart.detailedItems(), date: new Date().toLocaleDateString("ar-EG"), status: "بانتظار التأكيد", createdAt: Date.now()
   };
 
   if (typeof firebase !== 'undefined') {
-    try {
-      const db = firebase.firestore();
-      await db.collection("orders").add(order);
-      
-      for (const item of order.items) {
-        const pRef = await db.collection("products").where("id", "==", item.id).get();
-        if (!pRef.empty) {
-          const doc = pRef.docs[0];
-          const currStock = parseInt(doc.data().stock) || 0;
-          await db.collection("products").doc(doc.id).update({
-            stock: Math.max(0, currStock - item.qty)
-          });
-        }
-      }
-    } catch (err) {
-      console.error("خطأ في رفع الطلب للسحابة:", err);
-    }
+    try { await firebase.firestore().collection("orders").add(order); } catch (err) { console.error(err); }
   }
 
   let savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
   savedOrders.push(order);
   localStorage.setItem('wt_store_orders', JSON.stringify(savedOrders));
 
-  const botToken = '8975813774:AAGEM7r1snpX5tIhckDsqQewl130GQ624Iw';
-  const chatId = '5535861156';
-
-  const promoText = window._appliedPromo ? `\n🎟️ كود الخصم: ${window._appliedPromo.code} (خصم ${discountVal} ج.م)` : '';
-
-  const telegramMessage = `
-🔔 طلب جديد من متجر WT Store!
-
-🔖 رقم الطلب: ${orderNumber}
-👤 الاسم: ${values.fName}
-📞 الهاتف: ${values.fPhone}
-💬 واتساب: ${values.fWhatsapp}
-📍 المحافظة: ${values.fProvince}
-🏙️ المدينة: ${values.fCity}
-🏠 العنوان: ${values.fAddress}
-💳 طريقة الدفع: ${paymentMethod}${promoText}
-📝 ملاحظات: ${order.notes || 'لا يوجد'}
-
-🛒 تفاصيل المنتجات:
-${itemsText}
-
-💰 الإجمالي النهائي: ${finalTotal} ${STORE_CONFIG.currency || 'ج.م'}
-  `.trim();
-
-  try {
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: telegramMessage,
-        parse_mode: 'HTML'
-      })
-    });
-  } catch (error) {
-    console.error('خطأ في إرسال تليجرام:', error);
-  }
-
   Cart.clear();
   window._lastOrder = order;
   navigate("success");
-  setTimeout(() => renderSuccessView(order), 50);
 }
 
 function renderSuccessView(order) {
   order = order || window._lastOrder;
   const el = document.getElementById("view-success");
   if (!el) return;
-  if (!order) {
-    el.innerHTML = `<div class="container"><p>لا يوجد طلب حديث لعرضه.</p></div>`;
-    return;
-  }
-  
-  let paymentInstructions = "";
-  if (order.paymentMethod === "فودافون كاش") {
-    paymentInstructions = `<div style="background:rgba(230,0,0,0.1); color:#e60000; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #e60000;">
-      <strong>تعليمات الدفع:</strong> برجاء تحويل مبلغ ${order.total} ج.م إلى رقم فودافون كاش الخاص بنا والتواصل معنا لتأكيد التحويل.
-    </div>`;
-  } else if (order.paymentMethod === "إنستا باي (InstaPay)") {
-    paymentInstructions = `<div style="background:rgba(102,0,204,0.1); color:#6600cc; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #6600cc;">
-      <strong>تعليمات الدفع:</strong> برجاء تحويل مبلغ ${order.total} ج.م عبر إنستا باي والتواصل معنا لتأكيد التحويل.
-    </div>`;
-  }
-
   el.innerHTML = `
-    <div class="container success-view">
-      <div class="success-icon">🎉</div>
-      <h1>تم استلام طلبك بنجاح</h1>
-      <div class="success-card">
-        <div class="summary-row"><span>رقم الطلب</span><span>${order.orderNumber}</span></div>
-        <div class="summary-row"><span>الاسم</span><span>${order.name}</span></div>
-        <div class="summary-row"><span>طريقة الدفع</span><span>${order.paymentMethod || 'الدفع عند الاستلام'}</span></div>
-        <div class="summary-row"><span>الإجمالي</span><span>${order.total} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
-        <div class="summary-row"><span>الحالة</span><span class="status-badge">بانتظار التأكيد</span></div>
-        ${paymentInstructions}
-      </div>
-      <div class="success-actions">
-        <button class="btn btn-primary btn-lg" onclick="navigate('myorders')">عرض طلباتي</button>
-        <button class="btn btn-text" onclick="navigate('home')">العودة للرئيسية</button>
-      </div>
+    <div class="container success-view" style="text-align:center; padding:50px 20px;">
+      <h1>🎉 تم استلام طلبك بنجاح!</h1>
+      <p>رقم الطلب: ${order ? order.orderNumber : ''}</p>
+      <button class="btn btn-primary" onclick="navigate('myorders')" style="margin-top:20px;">عرض طلباتي</button>
     </div>`;
 }
 
 function renderMyOrdersView() {
   const el = document.getElementById("view-myorders");
   if (!el) return;
-
   const savedOrders = JSON.parse(localStorage.getItem('wt_store_orders') || '[]');
-  
   if (savedOrders.length === 0) {
-    el.innerHTML = `
-      <div class="container" style="text-align: center; padding: 40px 0;">
-        <h1 class="page-title">📦 طلباتي السابقة</h1>
-        <div class="empty-state">
-          <div class="empty-icon">📭</div>
-          <p>لا توجد أي طلبات مسجلة من هذا المتصفح حتى الآن.</p>
-          <button class="btn btn-primary" onclick="navigate('home')" style="margin-top: 15px;">تسوق الان</button>
-        </div>
-      </div>
-    `;
+    el.innerHTML = `<div class="container" style="text-align:center; padding:50px;"><p>لا توجد طلبات سابقة</p></div>`;
     return;
   }
-
-  let ordersHtml = savedOrders.reverse().map(order => {
-    const status = order.status || "بانتظار التأكيد";
-    let statusColor = "#ffaa00";
-    if (status === "جاري التجهيز") statusColor = "#0088ff";
-    if (status === "في طريقها للتوصيل") statusColor = "#10b981";
-    if (status === "تم التسليم") statusColor = "#10b981";
-    if (status === "ملغى") statusColor = "#ef4444";
-
-    return `
-      <div class="success-card" style="margin-bottom: 20px; text-align: right; border: 1px solid var(--border);">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 10px;">
-          <h3 style="margin: 0; color: var(--text-main);">رقم الطلب: ${order.orderNumber}</h3>
-          <span style="background: rgba(0,255,102,0.1); color: ${statusColor}; padding: 4px 10px; border-radius: 12px; font-weight: bold; font-size: 13px;">${status}</span>
-        </div>
-        <div class="summary-row"><span>اسم العميل:</span><span>${order.name}</span></div>
-        <div class="summary-row"><span>طريقة الدفع:</span><span><b style="color:var(--text-muted);">${order.paymentMethod || 'الدفع عند الاستلام'}</b></span></div>
-        <div class="summary-row"><span>العنوان:</span><span>${order.province} - ${order.city} - ${order.address}</span></div>
-        <div class="summary-row"><span>الإجمالي:</span><span style="color: #10b981; font-weight: bold;">${order.total} ${STORE_CONFIG.currency || 'ج.م'}</span></div>
-        <div style="margin-top: 10px; font-size: 13px; color: var(--text-muted);">تاريخ الطلب: ${order.date}</div>
-      </div>
-    `;
-  }).join("");
-
   el.innerHTML = `
-    <div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
-      <h1 class="page-title" style="text-align: center; margin-bottom: 30px;">📦 طلباتي السابقة</h1>
-      ${ordersHtml}
-    </div>
-  `;
+    <div class="container" style="max-width:800px; padding:20px;">
+      <h1 class="page-title" style="text-align:center;">📦 طلباتي السابقة</h1>
+      ${savedOrders.map(o => `
+        <div style="background:var(--bg-card); padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid var(--border);">
+          <h3>رقم الطلب: ${o.orderNumber}</h3>
+          <p>الإجمالي: ${o.total} ج.م</p>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
-let toastTimeout;
 function showToast(message) {
   const toast = document.getElementById("toast");
   if (!toast) return;
   toast.textContent = message;
   toast.classList.add("show");
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(() => toast.classList.remove("show"), 2800);
+  setTimeout(() => toast.classList.remove("show"), 2800);
 }
 
 function toggleMobileMenu() {
-  const menu = document.getElementById("mobileMenu");
-  const hamburger = document.getElementById("hamburger");
-  if (menu) menu.classList.toggle("open");
-  if (hamburger) hamburger.classList.toggle("open");
+  document.getElementById("mobileMenu").classList.toggle("open");
 }
 function closeMobileMenu() {
-  const menu = document.getElementById("mobileMenu");
-  const hamburger = document.getElementById("hamburger");
-  if (menu) menu.classList.remove("open");
-  if (hamburger) hamburger.classList.remove("open");
+  document.getElementById("mobileMenu").classList.remove("open");
 }
 
 function scrollToSection(sectionId) {
   closeMobileMenu();
-  const homeView = document.getElementById("view-home");
-  
-  if (homeView && !homeView.classList.contains("active")) {
-    document.querySelectorAll(".view").forEach(v => {
-      v.classList.remove("active");
-      v.style.display = ""; 
-    });
-    homeView.classList.add("active");
-  }
-
+  navigate('home');
   setTimeout(() => {
-    const el = document.getElementById(sectionId) || document.querySelector(`.${sectionId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, 50);
+    const el = document.getElementById(sectionId);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  }, 100);
 }
 
 window.addEventListener("hashchange", () => {
@@ -799,26 +498,9 @@ window.addEventListener("hashchange", () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   initCloudProducts(); 
-  
-  if (typeof Cart !== "undefined" && Cart.updateCounter) {
-    Cart.updateCounter();
-  }
-
+  if (typeof Cart !== "undefined" && Cart.updateCounter) Cart.updateCounter();
   const yearEl = document.getElementById("year");
   if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-  if (typeof STORE_CONFIG !== "undefined") {
-    const fb = document.getElementById("footerFb");
-    const wa = document.getElementById("footerWa");
-    const ig = document.getElementById("footerIg");
-    const wa2 = document.getElementById("footerWa2");
-
-    if (fb) fb.href = STORE_CONFIG.facebookUrl;
-    if (wa) wa.href = STORE_CONFIG.whatsappUrl;
-    if (ig) ig.href = STORE_CONFIG.instagramUrl;
-    if (wa2) wa2.href = STORE_CONFIG.whatsappUrl;
-  }
-
   const { view, params } = parseHash();
   renderView(view, params);
 });
